@@ -1,40 +1,54 @@
 package org.awesome.controller;
 
-import org.awesome.mapper.UserMapper;
+import org.awesome.constants.Constant;
+import org.awesome.models.IdentifyCode;
 import org.awesome.models.User;
+import org.awesome.service.IIdentifyCodeService;
+import org.awesome.service.IUserService;
+import org.awesome.vo.LoginVo;
+import org.awesome.vo.RestResultVo;
+import org.awesome.vo.SignupVo;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
-import java.util.List;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 @RestController
+@RequestMapping("api/user/")
 public class UserController {
 
-    @Resource
-    private UserMapper userMapper;
+    @Autowired
+    private IUserService userService;
 
-    @GetMapping("user")
-    public List<User> getUsers() {
-        return userMapper.selectList(null);
+    @Autowired
+    private IIdentifyCodeService identifyCodeService;
+
+    @Autowired
+    private HttpSession httpSession;
+
+    @PostMapping("login")
+    public RestResultVo login(@RequestBody LoginVo loginVo) {
+        return userService.login(loginVo.getUsername(), loginVo.getPassword(), loginVo.getIdentifyCode());
     }
 
-    @GetMapping("user/{id}")
-    public User getUser(@PathVariable("id") int id) {
-        return userMapper.selectById(id);
+    @PostMapping("signUp")
+    public RestResultVo signUp(@RequestBody SignupVo signupVo) {
+        User user = new User();
+        BeanUtils.copyProperties(signupVo, user);
+        return userService.register(user);
     }
 
-    @PostMapping("user")
-    public void createUser(@RequestBody User user) {
-        userMapper.insert(user);
+    @GetMapping("refreshToken")
+    public RestResultVo refreshToken(@RequestHeader String authorization) {
+        return userService.refreshToken(authorization);
     }
 
-    @DeleteMapping("user/{id}")
-    public void deleteUser(@PathVariable("id") int id) {
-        userMapper.deleteById(id);
-    }
-
-    @PutMapping("user")
-    public void updateUser(@RequestBody User user) {
-        userMapper.updateById(user);
+    @GetMapping("identifyCode")
+    public void getIdentifyCode(HttpServletResponse response) {
+        IdentifyCode identifyCode = identifyCodeService.generateIdentifyCode();
+        httpSession.setAttribute(Constant.ATTRIBUTE_IDENTIFYCODE_KEY, identifyCode.getResult());
+        identifyCodeService.generateIdentifyCodeImage(identifyCode, response);
     }
 }

@@ -1,8 +1,9 @@
-DELETE FROM user;
+delete from authority;
+delete from user;
 
-INSERT INTO user (id, name, age, email) VALUES
-(1, 'Jone', 18, 'test1@baomidou.com'),
-(2, 'Jack', 20, 'test2@baomidou.com'),
-(3, 'Tom', 28, 'test3@baomidou.com'),
-(4, 'Sandy', 21, 'test4@baomidou.com'),
-(5, 'Billie', 24, 'test5@baomidou.com');
+INSERT INTO user (username, password, age, email, enabled) VALUES ('admin', 'password', 26, '13005454311@qq.com', TRUE);
+INSERT INTO user (username, password, age, email, enabled) VALUES ('lucifer', 'password', 26, '13005454311@qq.com', TRUE);
+
+INSERT INTO authority (username, authority) VALUES ('admin', 'ADMIN');
+INSERT INTO authority (username, authority) VALUES ('admin', 'USER');
+INSERT INTO authority (username, authority) VALUES ('lucifer', 'USER');

@@ -1,19 +1,10 @@
-package org.awesome.models;
+package org.awesome.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import lombok.Data;
-
-import java.util.List;
-
-@Data
-public class User {
+public class SignupVo {
     private String username;
     private String password;
     private int age;
     private String email;
-    private boolean enabled;
-    @TableField(exist = false)
-    private List<String> Authorities;
 
     public String getUsername() {
         return username;
@@ -45,21 +36,5 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public List<String> getAuthorities() {
-        return Authorities;
-    }
-
-    public void setAuthorities(List<String> authorities) {
-        Authorities = authorities;
     }
 }

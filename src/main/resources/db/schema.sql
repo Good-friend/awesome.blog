@@ -1,10 +1,20 @@
-DROP TABLE IF EXISTS user;
-
 CREATE TABLE user
 (
-	id BIGINT(20) NOT NULL COMMENT '主键ID',
-	name VARCHAR(30) NULL DEFAULT NULL COMMENT '姓名',
-	age INT(11) NULL DEFAULT NULL COMMENT '年龄',
-	email VARCHAR(50) NULL DEFAULT NULL COMMENT '邮箱',
-	PRIMARY KEY (id)
+  username VARCHAR(256) PRIMARY KEY,
+  password VARCHAR(256),
+  email VARCHAR(256),
+  age INT,
+  enabled  TINYINT(1)
 );
+
+CREATE TABLE authority
+(
+  id        INT AUTO_INCREMENT PRIMARY KEY,
+  username  VARCHAR(256),
+  authority VARCHAR(256),
+  CONSTRAINT fk_authority_user FOREIGN KEY (username) REFERENCES user (username)
+);
+
+CREATE UNIQUE INDEX ix_auth_username
+  ON authority (username, authority);
+
