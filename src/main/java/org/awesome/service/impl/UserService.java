@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -87,12 +88,12 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public RestResultVo login(String username, String password, int vcode) {
+    public RestResultVo login(String username, String password, int identityCode) {
         LOG.info("[{}] attempt login", username);
 
         //校验验证码
         Object code = httpSession.getAttribute(Constant.ATTRIBUTE_IDENTIFYCODE_KEY);
-        if (code == null || ((int) code) != vcode) {
+        if (code == null || ((int) code) != identityCode) {
 
             LOG.error("The identifyCode invalid [{}] provided.", username);
 
@@ -100,7 +101,16 @@ public class UserService implements IUserService {
         }
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(authenticationToken);
+        } catch (AuthenticationException e) {
+            LOG.error("Authenticate failed [{}]", username);
+
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "Authenticate failed.", null);
+        }
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetails userDetails = jwtUserDetailService.loadUserByUsername(username);
 
