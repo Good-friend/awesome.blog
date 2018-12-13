@@ -96,7 +96,7 @@ public class UserService implements IUserService {
 
         //校验验证码
         //Object code = httpSession.getAttribute(Constant.ATTRIBUTE_IDENTIFYCODE_KEY);
-        Object code = redisDao.get(username);
+        Object code = redisDao.get("validate["+username+"]");
         LOG.info("验证答案：[{}]", code);
         if (code == null || ((int) code) != identityCode) {
 
@@ -104,13 +104,14 @@ public class UserService implements IUserService {
 
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "identifyCode invalid.", null);
         }
-
+        redisDao.del("validate["+username+"]");
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
 
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(authenticationToken);
         } catch (AuthenticationException e) {
+            e.printStackTrace();
             LOG.error("Authenticate failed [{}]", username);
 
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "Authenticate failed.", null);
@@ -120,7 +121,7 @@ public class UserService implements IUserService {
         UserDetails userDetails = jwtUserDetailService.loadUserByUsername(username);
 
         LOG.info("[{}] login successfully.", username);
-
+        redisDao.set("["+username+"]info","");//登陆成功redis缓存用户所有信息，避免以后用到去查询 TODO
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null, jwtTokenUtil.generateToken(userDetails));
     }
 
@@ -166,5 +167,9 @@ public class UserService implements IUserService {
         LOG.error("refresh token failed [{}]", oldToken);
 
         return new RestResultVo(RestResultVo.RestResultCode.FAILED, "token is expired. Login again, please.", null);
+    }
+    public static void main(String[] arg){
+        BCryptPasswordEncoder d = new BCryptPasswordEncoder();
+        System.out.println(d.encode("123456"));
     }
 }
