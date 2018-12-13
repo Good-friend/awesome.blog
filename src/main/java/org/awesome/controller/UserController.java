@@ -39,6 +39,14 @@ public class UserController {
     public RestResultVo login(@RequestBody LoginVo loginVo) {
         return userService.login(loginVo.getUsername(), loginVo.getPassword(), loginVo.getIdentifyCode());
     }
+    @GetMapping("logout")
+    public String logout(@RequestParam("username") String username) {
+        if(username == null || username ==""){
+            return "0";
+        }
+        redisDao.del("["+username+"]info");
+        return "1";
+    }
 
     @PostMapping("signUp")
     public RestResultVo signUp(@RequestBody SignupVo signupVo) {
@@ -52,6 +60,12 @@ public class UserController {
         return userService.refreshToken(authorization);
     }
 
+    /**
+     * 验证码获取
+     * @param request
+     * @param response
+     * @return
+     */
     @GetMapping("identifyCode")
     public JSONObject getIdentifyCode(HttpServletRequest request, HttpServletResponse response) {
         JSONObject resObj = new JSONObject();
@@ -62,7 +76,7 @@ public class UserController {
             return resObj;
         }
         IdentifyCode identifyCode = identifyCodeService.generateIdentifyCode();
-        redisDao.set(username,identifyCode.getResult());
+        redisDao.set("validate["+username+"]",identifyCode.getResult());
         resObj.put("result","1");
         resObj.put("img",identifyCodeService.generateIdentifyCodeImage(identifyCode, response));
         //httpSession.setAttribute(Constant.ATTRIBUTE_IDENTIFYCODE_KEY, identifyCode.getResult());

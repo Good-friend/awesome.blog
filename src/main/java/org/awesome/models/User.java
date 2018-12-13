@@ -19,6 +19,7 @@ public class User {
     private String user_status;
     private int login_times;
     private String nick_name;
+    private String head_portrait_url;
     @TableField(exist = false)
     private List<String> Authorities;
 
