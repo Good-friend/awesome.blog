@@ -12,6 +12,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
@@ -46,9 +47,10 @@ public class UserController {
     }
 
     @GetMapping("identifyCode")
-    public void getIdentifyCode(HttpServletResponse response) {
+    public String getIdentifyCode(HttpServletRequest request,HttpServletResponse response) {
+        String username = request.getParameter("username");
         IdentifyCode identifyCode = identifyCodeService.generateIdentifyCode();
         httpSession.setAttribute(Constant.ATTRIBUTE_IDENTIFYCODE_KEY, identifyCode.getResult());
-        identifyCodeService.generateIdentifyCodeImage(identifyCode, response);
+        return identifyCodeService.generateIdentifyCodeImage(identifyCode, response);
     }
 }
