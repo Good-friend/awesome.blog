@@ -7,10 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import sun.misc.BASE64Encoder;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
 
@@ -57,7 +59,7 @@ public class IdentifyCodeService implements IIdentifyCodeService {
     }
 
     @Override
-    public void generateIdentifyCodeImage(IdentifyCode identifyCode, HttpServletResponse response) {
+    public String generateIdentifyCodeImage(IdentifyCode identifyCode, HttpServletResponse response) {
         LOG.info("Generate identifyCode image.");
 
         BufferedImage image = identifyCodeUtil.creatImage(identifyCode);
@@ -66,13 +68,18 @@ public class IdentifyCodeService implements IIdentifyCodeService {
         response.setDateHeader("expries", -1);
         response.setHeader("Cache-Control", "no-cache");
         response.setHeader("Pragma", "no-cache");
-
+        String base64Img = "";
         try {
-            ImageIO.write(image, "jpg", response.getOutputStream());
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ImageIO.write(image, "jpg", outputStream);
+            BASE64Encoder encoder = new BASE64Encoder();
+            base64Img = encoder.encode(outputStream.toByteArray());
+
         } catch (IOException _ignore) {
             LOG.error("Generate identifyCode image error. [{}]", _ignore.getMessage());
         }
 
         LOG.info("Generate identifyCode image finish.");
+        return base64Img;
     }
 }

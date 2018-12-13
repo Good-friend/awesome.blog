@@ -8,5 +8,5 @@ public interface IIdentifyCodeService {
 
     IdentifyCode generateIdentifyCode();
 
-    void generateIdentifyCodeImage(IdentifyCode identifyCode, HttpServletResponse response);
+    String generateIdentifyCodeImage(IdentifyCode identifyCode, HttpServletResponse response);
 }

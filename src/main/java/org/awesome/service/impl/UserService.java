@@ -1,6 +1,7 @@
 package org.awesome.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.awesome.Dao.RedisDao;
 import org.awesome.constants.Constant;
 import org.awesome.enums.RoleEnum;
 import org.awesome.mapper.AuthorityMapper;
@@ -54,6 +55,8 @@ public class UserService implements IUserService {
 
     @Autowired
     private HttpSession httpSession;
+    @Resource
+    private RedisDao redisDao;
 
     @Override
     public User findUserByName(String username) {
@@ -92,7 +95,9 @@ public class UserService implements IUserService {
         LOG.info("[{}] attempt login", username);
 
         //校验验证码
-        Object code = httpSession.getAttribute(Constant.ATTRIBUTE_IDENTIFYCODE_KEY);
+        //Object code = httpSession.getAttribute(Constant.ATTRIBUTE_IDENTIFYCODE_KEY);
+        Object code = redisDao.get(username);
+        LOG.info("验证答案：[{}]", code);
         if (code == null || ((int) code) != identityCode) {
 
             LOG.error("The identifyCode invalid [{}] provided.", username);
@@ -132,7 +137,7 @@ public class UserService implements IUserService {
         }
 
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-        user.setEnabled(true);
+        //user.setEnabled(true);
 
         userMapper.insert(user);
 

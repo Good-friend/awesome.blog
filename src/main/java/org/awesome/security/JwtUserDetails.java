@@ -53,6 +53,6 @@ public class JwtUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return user.isEnabled();
+        return "0".equals(user.getUser_status())?false:true;
     }
 }
