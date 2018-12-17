@@ -11,9 +11,5 @@ public interface IUserService {
 
     List<String> findUserAuthoritiesByName(String username);
 
-    RestResultVo login(String username, String password, int identifyCode);
 
-    RestResultVo register(User user);
-
-    RestResultVo refreshToken(String oldToken);
 }

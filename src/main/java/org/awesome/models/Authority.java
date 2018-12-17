@@ -1,5 +1,8 @@
 package org.awesome.models;
 
+import com.baomidou.mybatisplus.annotation.TableName;
+
+@TableName("t_authority")
 public class Authority {
     private int id;
     private String username;

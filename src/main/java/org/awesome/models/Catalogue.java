@@ -1,6 +1,5 @@
 package org.awesome.models;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,10 +17,8 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor
 @TableName("t_catalogue")
 public class Catalogue {
-
     private int id;
 
-    @TableField("serial_number")
     private String serialNumber;//问题编号
 
     private String title;// 标题
@@ -29,17 +26,13 @@ public class Catalogue {
     private String status;// 问题状态
     // 0-未结；1-已结
 
-    @TableField("create_time")
     private String createTime;//		创建时间
 
-    @TableField("end_time")
     private String endTime;//		结束时间
 
-    @TableField("seenTimes")
-    private int seen_times;//浏览次数
+    private int seenTimes;//浏览次数
 
-    @TableField("commentTimes")
-    private int comment_times;//评价次数
+    private int commentTimes;//评价次数
 
     private boolean best;//是否是精帖
 
@@ -48,7 +41,6 @@ public class Catalogue {
     private String type;//类型：具体看枚举TypeEnum
 
     private boolean stick;//是否置顶
-
 
 
 }

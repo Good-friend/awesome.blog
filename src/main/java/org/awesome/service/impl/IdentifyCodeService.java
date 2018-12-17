@@ -1,18 +1,23 @@
 package org.awesome.service.impl;
 
+import org.awesome.Dao.RedisDao;
+import org.awesome.constants.Constant;
 import org.awesome.models.IdentifyCode;
 import org.awesome.service.IIdentifyCodeService;
 import org.awesome.utils.IdentifyCodeUtil;
+import org.awesome.vo.RestResultVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.text.MessageFormat;
+import java.util.Base64;
 
 @Service
 public class IdentifyCodeService implements IIdentifyCodeService {
@@ -22,11 +27,23 @@ public class IdentifyCodeService implements IIdentifyCodeService {
     @Autowired
     private IdentifyCodeUtil identifyCodeUtil;
 
+    @Autowired
+    private RedisDao redisDao;
+
     private SecureRandom random = new SecureRandom();
 
     @Override
-    public IdentifyCode generateIdentifyCode() {
-        LOG.info("Generate identifyCode.");
+    public RestResultVo generateIdentifyCodeAndImage(String username) {
+        final IdentifyCode identifyCode = createIdentifyCode();
+        final String identifyCodeImage = createIdentifyCodeImage(identifyCode);
+
+        redisDao.set(MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, username), identifyCode.getResult(), Constant.REDIS_IDENTIFYCODE_TIMEOUT);
+
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null, identifyCodeImage);
+    }
+
+    private IdentifyCode createIdentifyCode() {
+        LOG.info("Create identifyCode.");
 
         int op1 = random.nextInt(100);
         int op2 = random.nextInt(100);
@@ -51,33 +68,28 @@ public class IdentifyCodeService implements IIdentifyCodeService {
         identifyCode.setOp(opString);
         identifyCode.setResult(result);
 
-        LOG.info("Generate identifyCode finish.");
+        LOG.info("Create identifyCode finish.");
 
         return identifyCode;
     }
 
-    @Override
-    public String generateIdentifyCodeImage(IdentifyCode identifyCode, HttpServletResponse response) {
-        LOG.info("Generate identifyCode image.");
+    private String createIdentifyCodeImage(IdentifyCode identifyCode) {
+        LOG.info("Create identifyCode image.");
 
+        String result = "";
         BufferedImage image = identifyCodeUtil.creatImage(identifyCode);
-
-        response.setContentType("image/jpeg");
-        response.setDateHeader("expries", -1);
-        response.setHeader("Cache-Control", "no-cache");
-        response.setHeader("Pragma", "no-cache");
-        String base64Img = "";
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ImageIO.write(image, "jpg", outputStream);
-            BASE64Encoder encoder = new BASE64Encoder();
-            base64Img = encoder.encode(outputStream.toByteArray());
+            Base64.Encoder encoder = Base64.getEncoder();
+            result = encoder.encodeToString(outputStream.toByteArray());
 
         } catch (IOException _ignore) {
             LOG.error("Generate identifyCode image error. [{}]", _ignore.getMessage());
         }
 
-        LOG.info("Generate identifyCode image finish.");
-        return base64Img;
+        LOG.info("Create identifyCode image finish.");
+
+        return result;
     }
 }

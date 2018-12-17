@@ -3,21 +3,23 @@ package org.awesome.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.awesome.constants.Constant;
 import org.awesome.security.JwtUserDetails;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class JwtTokenUtil implements Serializable {
-    private final String secret = "aaaaaaaa";
+    private final String secret = "awesomeBlogSecret";
 
     private String generateToken(Map<String, Object> claims) {
-        Date expirationDate = new Date(System.currentTimeMillis() + 60 * 60 * 24 * 1000);
+        Date expirationDate = new Date(System.currentTimeMillis() + Constant.JWT_TIMEOUT);
         return Jwts.builder().setClaims(claims).setExpiration(expirationDate).signWith(SignatureAlgorithm.HS512, secret).compact();
     }
 
@@ -59,6 +61,14 @@ public class JwtTokenUtil implements Serializable {
         }
     }
 
+    public boolean isExpireSoon(String token) {
+        Claims claims = getClaimsFromToken(token);
+        Date expiration = claims.getExpiration();
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MINUTE, 1);
+        return expiration.before(calendar.getTime());
+    }
+
     public String refreshToken(String token) {
         String refreshToken;
         try {
@@ -74,6 +84,6 @@ public class JwtTokenUtil implements Serializable {
     public boolean validateToken(String token, UserDetails userDetails) {
         JwtUserDetails jwtUserDetails = (JwtUserDetails) userDetails;
         String username = getUsernameFromToken(token);
-        return (username.equals(jwtUserDetails.getUsername()) && !isExpired(token));
+        return username.equals(jwtUserDetails.getUsername());
     }
 }

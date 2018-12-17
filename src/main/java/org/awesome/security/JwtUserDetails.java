@@ -1,5 +1,6 @@
 package org.awesome.security;
 
+import org.awesome.enums.UserStatus;
 import org.awesome.models.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -38,12 +39,12 @@ public class JwtUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;
+        return user.getUserStatus().equals(UserStatus.EXPIRED.getValue()) ? false : true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return user.getUserStatus().equals(UserStatus.LOCKD.getValue()) ? false : true;
     }
 
     @Override
@@ -53,6 +54,6 @@ public class JwtUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return "0".equals(user.getUser_status())?false:true;
+        return user.getUserStatus().equals(UserStatus.ENABLE.getValue()) ? true : false;
     }
 }

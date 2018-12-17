@@ -1,12 +1,8 @@
 package org.awesome.service;
 
-import org.awesome.models.IdentifyCode;
-
-import javax.servlet.http.HttpServletResponse;
+import org.awesome.vo.RestResultVo;
 
 public interface IIdentifyCodeService {
 
-    IdentifyCode generateIdentifyCode();
-
-    String generateIdentifyCodeImage(IdentifyCode identifyCode, HttpServletResponse response);
+    RestResultVo generateIdentifyCodeAndImage(String username);
 }

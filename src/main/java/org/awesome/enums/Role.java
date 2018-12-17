@@ -1,6 +1,6 @@
 package org.awesome.enums;
 
-public enum RoleEnum {
+public enum Role {
     ADMIN("ADMIN"),
     USER("USER");
 
@@ -14,7 +14,7 @@ public enum RoleEnum {
         this.value = value;
     }
 
-    RoleEnum(String value) {
+    Role(String value) {
         this.value = value;
     }
 }

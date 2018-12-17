@@ -7,15 +7,30 @@ public interface Constant {
     /**
      * jwt token前缀
      */
-    public static final String JWT_PREFIX = "Bearer ";
+    String JWT_PREFIX = "Bearer ";
 
     /**
      * jwt请求头
      */
-    public static final String JWT_HEADER = "Authorization";
+    String JWT_HEADER = "Authorization";
 
     /**
-     * session验证码key
+     * jwt失效时间
      */
-    public static final String ATTRIBUTE_IDENTIFYCODE_KEY = "code";
+    int JWT_TIMEOUT = 60 * 60 * 24 * 1000;
+
+    /**
+     * redis验证码key
+     */
+    String REDIS_IDENTIFYCODE_KEY_WRAPPER = "identifyCodeValidate[{0}]";
+
+    /**
+     * redis验证码失效时间
+     */
+    int REDIS_IDENTIFYCODE_TIMEOUT = 60;
+
+    /**
+     * redis token黑名单失效时间
+     */
+    int REDIS_TOKEN_TIMEOUT = 30;
 }
