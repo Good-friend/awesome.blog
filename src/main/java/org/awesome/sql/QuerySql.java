@@ -17,6 +17,10 @@ public class QuerySql {
 
                 WHERE("t.author = t1.username and t.type = t2.type_id ");
 
+
+                if(params.get("stick") !=null){
+                    WHERE("t.stick =#{stick}");
+                }
                 if(params.get("type") !=null){
                     WHERE("t.type =#{type}");
                 }
@@ -31,6 +35,8 @@ public class QuerySql {
                 }else{
                     ORDER_BY("t.id desc");
                 }
+
+
 
 
 
