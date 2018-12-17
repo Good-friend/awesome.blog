@@ -45,6 +45,15 @@ public class LobbyController {
         if(orderType != null){
             queryParams.put("orderType",orderType);
         }
+        String stick = request.getParameter("stick");
+        if(stick != null){
+            queryParams.put("stick","0");
+        }else{//查询置顶
+            Map<String,String> stickParams = new HashMap<String,String>();
+            stickParams.put("orderType","id");
+            stickParams.put("stick","1");
+            resObj.put("stickList",catalogueService.queryCatalogue(stickParams));
+        }
         resObj.put("catalogueList",catalogueService.queryCatalogue(queryParams));
         return resObj;
 
