@@ -42,5 +42,8 @@ public class Catalogue {
 
     private boolean stick;//是否置顶
 
+    private boolean publicity;//是否公开
+
+
 
 }
