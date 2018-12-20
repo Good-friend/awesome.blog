@@ -11,6 +11,7 @@ import org.awesome.models.Catalogue;
 import org.awesome.models.Connotation;
 import org.awesome.models.User;
 import org.awesome.service.IUserService;
+import org.awesome.utils.CommonUtils;
 import org.awesome.vo.ArticleVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +85,7 @@ public class UserService implements IUserService {
         catalogue.setSerialNumber(serialNumber);
         catalogue.setTitle(articleVo.getTitle());
         catalogue.setStatus("0");
-        catalogue.setCreateTime(getNowTimeNoFm());
+        catalogue.setCreateTime(CommonUtils.getNowTime());
         catalogue.setEndTime(articleVo.getEndTime());
         catalogue.setSeenTimes(0);
         catalogue.setCommentTimes(0);
@@ -100,20 +101,7 @@ public class UserService implements IUserService {
         connotationMapper.insert(connotation);
     }
 
-
-    private static String getNowTime() {
-        Date nowTime = new Date();
-        SimpleDateFormat time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sysDate = time.format(nowTime);
-        return sysDate;
-    }
-    private static String getNowTimeNoFm() {
-        Date nowTime = new Date();
-        SimpleDateFormat time = new SimpleDateFormat("yyyyMMddHHmmss");
-        String sysDate = time.format(nowTime);
-        return sysDate;
-    }
-    static String str = "0000";
+    private static String str = "0000";
     private String getMajorKeyId(String type){
         String id = (String)redisDao.get("major_key_id");
         Date nowTime = new Date();

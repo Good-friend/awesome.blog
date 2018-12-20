@@ -2,8 +2,10 @@ package org.awesome.controller;
 
 import com.alibaba.fastjson.JSON;
 import org.awesome.Dao.RedisDao;
+import org.awesome.models.UpdateBlog;
 import org.awesome.models.User;
 import org.awesome.service.IUserService;
+import org.awesome.service.impl.MongoService;
 import org.awesome.vo.ArticleVo;
 import org.awesome.vo.RestResultVo;
 import org.awesome.vo.SignupVo;
@@ -23,6 +25,8 @@ public class UserController {
     private IUserService userService;
     @Resource
     private RedisDao redisDao;
+    @Resource
+    private MongoService mongoService;
 
     /**
      * 用户退出登陆
@@ -48,16 +52,12 @@ public class UserController {
         if(StringUtils.isEmpty(username)){
             return null;
         }
-        User user = null;
-        if(redisDao.hasKey(username)){
-            user = redisGetUser(username);
-            System.out.println("redis取出："+JSON.toJSONString(user));
-        }else{
+        User user = redisGetUser(username);
+        if(user == null){
             user = userService.findUserByName(username);
             user.setPassword("");
             user.setAuthorities(userService.findUserAuthoritiesByName(username));
             redisDao.set(username,JSON.toJSONString(user));
-            System.out.println("数据库查出："+JSON.toJSONString(user));
         }
         return user;
     }
@@ -81,6 +81,11 @@ public class UserController {
         }
     }
 
+    @PostMapping("saveUpdateBlogs")
+    public RestResultVo saveUpdateBlogs(@RequestBody UpdateBlog UpdateBlog){
+        mongoService.saveUpdateBlog(UpdateBlog);
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
+    }
     /*****************通用工具类**************************/
 
     private  User redisGetUser(String username){
@@ -88,7 +93,7 @@ public class UserController {
         if(userObj == null) {
             return null;
         }
-        return JSON.parseObject(JSON.toJSONString(userObj),User.class);
+        return JSON.parseObject((String)userObj,User.class);
     }
 
 

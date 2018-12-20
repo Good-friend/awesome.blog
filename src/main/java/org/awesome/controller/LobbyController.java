@@ -2,6 +2,7 @@ package org.awesome.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import org.awesome.service.ICatalogueService;
+import org.awesome.service.impl.MongoService;
 import org.awesome.vo.CatalogueVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +21,8 @@ public class LobbyController {
 
     @Autowired
     private ICatalogueService catalogueService;
+    @Resource
+    private MongoService mongoService;
 
     @GetMapping("queryCatalogueList")
     public JSONObject queryCatalogueList(HttpServletRequest request) {
