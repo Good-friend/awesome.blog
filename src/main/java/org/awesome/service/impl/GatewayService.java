@@ -63,9 +63,8 @@ public class GatewayService implements IGatewayService {
         Object code = redisDao.get(key);
 
         if (code == null || ((int) code) != identityCode) {
-
+            redisDao.del(key);
             LOG.error("The identifyCode invalid [{}] provided.", username);
-
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "identifyCode invalid.", null);
         }
 

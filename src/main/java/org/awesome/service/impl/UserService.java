@@ -1,15 +1,13 @@
 package org.awesome.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.awesome.Dao.RedisDao;
 import org.awesome.mapper.AuthorityMapper;
 import org.awesome.mapper.CatalogueMapper;
 import org.awesome.mapper.ConnotationMapper;
 import org.awesome.mapper.UserMapper;
-import org.awesome.models.Authority;
-import org.awesome.models.Catalogue;
-import org.awesome.models.Connotation;
-import org.awesome.models.User;
+import org.awesome.models.*;
 import org.awesome.service.IUserService;
 import org.awesome.utils.CommonUtils;
 import org.awesome.vo.ArticleVo;
@@ -21,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,6 +44,8 @@ public class UserService implements IUserService {
 
     @Resource
     private RedisDao redisDao;
+    @Resource
+    private MongoService mongoService;
 
     @Override
     public User findUserByName(String username) {
@@ -79,7 +80,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public void saveNewArticle(ArticleVo articleVo) throws Exception{
+    public String saveNewArticle(ArticleVo articleVo) throws Exception{
         String serialNumber = getMajorKeyId(articleVo.getType().substring(0,1));
         Catalogue catalogue = new Catalogue();
         catalogue.setSerialNumber(serialNumber);
@@ -99,6 +100,7 @@ public class UserService implements IUserService {
         connotation.setSerialNumber(serialNumber);
         connotation.setContent(articleVo.getContent());
         connotationMapper.insert(connotation);
+        return serialNumber;
     }
 
     private static String str = "0000";
@@ -115,5 +117,41 @@ public class UserService implements IUserService {
         id = type+sysDate+str;
         redisDao.set("major_key_id",id);
         return id;
+    }
+
+    @Override
+    public OperationFlow createOperationFlow(HttpServletRequest request, String action){
+        String serialNumber = request.getParameter("serialNumber");
+        if(serialNumber == null){
+            LOG.error("serialNumber is null !");
+            return null;
+        }
+        String username = request.getParameter("username");
+        String ip = CommonUtils.getIpAddress(request);
+        List<OperationFlow> thumbUpList = mongoService.queryOperationFlow(action,serialNumber,username,ip);
+        if(thumbUpList == null || thumbUpList.size() <1){
+            OperationFlow operationFlow = new OperationFlow();
+            operationFlow.setAction(action);
+            operationFlow.setTarget(serialNumber);
+            operationFlow.setWho(username);
+            operationFlow.setIp(ip);
+            return operationFlow;
+        }else{
+            return null;
+        }
+    }
+    @Override
+    public  User redisGetUser(String username){
+        Object userObj = redisDao.get(username);
+        if(userObj == null) {
+            return null;
+        }
+        return JSON.parseObject((String)userObj,User.class);
+    }
+
+    @Override
+    public void updateArticle(String serialNumber,String type,String content,String title) throws Exception{
+       catalogueMapper.updateCatalogueTitle(serialNumber, type, title);
+       connotationMapper.updateConnotation(serialNumber, content);
     }
 }

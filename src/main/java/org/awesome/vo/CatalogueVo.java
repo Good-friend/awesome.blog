@@ -26,6 +26,8 @@ public class CatalogueVo {
 
     private boolean best;//是否是精帖
 
+    private boolean publicity;//是否公开
+
     private String author;//作者---username
 
     private String type;//类型：具体看枚举TypeEnum

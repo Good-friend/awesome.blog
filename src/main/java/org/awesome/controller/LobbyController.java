@@ -1,18 +1,28 @@
 package org.awesome.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.mongodb.client.result.UpdateResult;
+import org.awesome.Dao.RedisDao;
+import org.awesome.models.*;
 import org.awesome.service.ICatalogueService;
 import org.awesome.service.impl.MongoService;
+import org.awesome.service.impl.UserService;
+import org.awesome.utils.CommonUtils;
+import org.awesome.vo.ArticleVo;
 import org.awesome.vo.CatalogueVo;
+import org.awesome.vo.RestResultVo;
+import org.awesome.vo.UserCommentVo;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -23,9 +33,13 @@ public class LobbyController {
     private ICatalogueService catalogueService;
     @Resource
     private MongoService mongoService;
+    @Resource
+    private RedisDao redisDao;
+    @Resource
+    private UserService userService;
 
     @GetMapping("queryCatalogueList")
-    public JSONObject queryCatalogueList(HttpServletRequest request) {
+    public RestResultVo queryCatalogueList(HttpServletRequest request) {
         JSONObject resObj = new JSONObject();
         Map<String, String> queryParams = new HashMap<String, String>();
         String status = request.getParameter("status");
@@ -51,15 +65,91 @@ public class LobbyController {
             Map<String, String> stickParams = new HashMap<String, String>();
             stickParams.put("orderType", "id");
             stickParams.put("stick", "1");
+            if (type != null) {
+                stickParams.put("type", type);
+            }
             resObj.put("stickList", catalogueService.queryCatalogue(stickParams));
         }
         resObj.put("catalogueList", catalogueService.queryCatalogue(queryParams));
-        return resObj;
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", resObj);
 
     }
 
     @GetMapping("queryConnotationDetail")
-    public CatalogueVo queryConnotationDetail(@RequestParam("serialNumber") String serialNumber) {
-        return catalogueService.queryConnotationDetail(serialNumber);
+    public RestResultVo queryConnotationDetail(@RequestParam("serialNumber") String serialNumber,HttpServletRequest request) {
+        OperationFlow operationFlow = userService.createOperationFlow(request,"1");
+        if(operationFlow != null && catalogueService.updateSeenTimes(serialNumber) ==1){
+            mongoService.saveOperationFlow(operationFlow);
+        }
+        CatalogueVo catalogueVo = catalogueService.queryConnotationDetail(serialNumber);
+        JSONObject resObj = new JSONObject();
+        Map<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("orderType","heat");
+        resObj.put("heatData",catalogueService.queryCatalogueByParams(queryParams));
+        resObj.put("detailData",catalogueVo);
+        resObj.put("commentList",mongoService.queryCommentBySerialNumber(serialNumber));
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", resObj);
     }
+
+
+    /**
+     * 自己的帖
+     * @param username
+     * @return
+     */
+    @GetMapping("/getOwnCatalogue")
+    public RestResultVo getOwnCatalogue(@RequestParam("username") String username){
+        JSONObject resObj = new JSONObject();
+        Map<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("username",username);
+        User user = userService.redisGetUser(username);
+        if(user == null){
+            queryParams.put("lookOther","true");
+            user = userService.findUserByName(username);
+            user.setPassword("");
+            user.setAuthorities(userService.findUserAuthoritiesByName(username));
+        }
+        resObj.put("user",user);
+        resObj.put("ownCatalogue",catalogueService.queryCatalogueByParams(queryParams));
+
+        List<Comment> ownCommentList = mongoService.queryUserCommentInfo(username);
+        List<UserCommentVo> ownCommentInfoList = new ArrayList<UserCommentVo>();
+        if(ownCommentList != null){
+            for (Comment comment:ownCommentList) {
+                Catalogue catalogue =catalogueService.queryCatalogueBySerialNumber(comment.getSerialNumber());
+                if(catalogue == null){
+                    continue;
+                }
+                ownCommentInfoList.add(new UserCommentVo(comment.getSerialNumber(),
+                        catalogue.getTitle(),
+                        username,
+                        comment.getReplyContent(),
+                        comment.getCreateTime())
+                );
+            }
+        }
+        resObj.put("ownCommentInfoList",ownCommentInfoList);
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", resObj);
+    }
+
+    @GetMapping("/updateThumbUp")
+    public RestResultVo updateThumbUp(HttpServletRequest request){
+        OperationFlow operationFlow = userService.createOperationFlow(request,"3");
+        if(operationFlow == null){
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "您已点过赞", null);
+        }
+        String id = request.getParameter("id");
+        UpdateResult result = mongoService.updateThumbUp(id);
+        if(result.isModifiedCountAvailable()){
+            mongoService.saveOperationFlow(operationFlow);
+        }
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", result);
+    }
+
+    @PostMapping("/saveGuestReply")
+    public RestResultVo saveGuestReply(@RequestBody GuestReply guestReply){
+        mongoService.saveGuestReply(guestReply);
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
+    }
+
 }

@@ -1,11 +1,15 @@
 package org.awesome.controller;
 
+import com.alibaba.fastjson.JSONObject;
+import org.awesome.Dao.RedisDao;
 import org.awesome.constants.Constant;
+import org.awesome.models.OperationFlow;
 import org.awesome.models.UpdateBlog;
 import org.awesome.models.User;
 import org.awesome.service.IGatewayService;
 import org.awesome.service.IIdentifyCodeService;
 import org.awesome.service.impl.MongoService;
+import org.awesome.utils.CommonUtils;
 import org.awesome.vo.LoginVo;
 import org.awesome.vo.RestResultVo;
 import org.awesome.vo.SignupVo;
@@ -60,10 +64,17 @@ public class GatewayController {
     public RestResultVo queryUpdateBlogs(HttpServletRequest request){
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", mongoService.queryUpdateBlogList());
     }
+
+    /**
+     * 网站日志更新
+     * @param UpdateBlog
+     * @return
+     */
     @PostMapping("saveUpdateBlogs")
     public RestResultVo saveUpdateBlogs(@RequestBody UpdateBlog UpdateBlog){
         mongoService.saveUpdateBlog(UpdateBlog);
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
     }
+
 
 }

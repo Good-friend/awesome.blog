@@ -36,7 +36,9 @@ public class RestResultVo {
     }
 
     public static class RestResultCode {
-        public static final int SUCCESS = 0;
-        public static final int FAILED = -1;
+        public static final int SUCCESS = 1;
+        public static final int FAILED = 0;
+        public static final int EXCEPTION = -1;
+
     }
 }

@@ -11,6 +11,6 @@ public class ControllerAdvice {
 
     @ExceptionHandler({RuntimeException.class})
     RestResultVo handleException(HttpServletRequest request, Throwable ex) {
-        return new RestResultVo(RestResultVo.RestResultCode.FAILED, "Ah, server error.", null);
+        return new RestResultVo(RestResultVo.RestResultCode.EXCEPTION, "Ah, server error.", null);
     }
 }

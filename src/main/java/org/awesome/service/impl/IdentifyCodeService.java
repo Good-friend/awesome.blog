@@ -38,7 +38,7 @@ public class IdentifyCodeService implements IIdentifyCodeService {
         final String identifyCodeImage = createIdentifyCodeImage(identifyCode);
 
         redisDao.set(MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, username), identifyCode.getResult(), Constant.REDIS_IDENTIFYCODE_TIMEOUT);
-
+        LOG.info("存入Redis验证码：[{}] .", identifyCode.getResult());
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null, identifyCodeImage);
     }
 
