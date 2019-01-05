@@ -1,6 +1,7 @@
 package org.awesome.service;
 
 import org.awesome.models.Favorite;
+import org.awesome.vo.RestResultVo;
 
 import java.util.List;
 
@@ -11,14 +12,14 @@ public interface IFavoriteService {
      *
      * @param favorites
      */
-    void addFavorites(List<Favorite> favorites);
+    RestResultVo addFavorites(List<Favorite> favorites);
 
     /**
      * 批量删除收藏
      *
      * @param ids
      */
-    void deleteFavorites(List<Integer> ids);
+    RestResultVo deleteFavorites(List<Integer> ids);
 
     /**
      * 分页查询用户收藏
@@ -28,6 +29,5 @@ public interface IFavoriteService {
      * @param username
      * @return
      */
-    List<Favorite> getFavoritesByUsername(int pageIndex, int pageSize, String username);
-
+    RestResultVo getFavoritesByUsername(int pageIndex, int pageSize, String username);
 }

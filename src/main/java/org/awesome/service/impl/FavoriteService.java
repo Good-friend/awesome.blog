@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.awesome.mapper.FavoriteMapper;
 import org.awesome.models.Favorite;
 import org.awesome.service.IFavoriteService;
+import org.awesome.vo.RestResultVo;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -17,20 +18,23 @@ public class FavoriteService implements IFavoriteService {
     private FavoriteMapper favoriteMapper;
 
     @Override
-    public void addFavorites(List<Favorite> favorites) {
+    public RestResultVo addFavorites(List<Favorite> favorites) {
         for (Favorite favorite : favorites) {
             favoriteMapper.insert(favorite);
         }
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", "");
     }
 
     @Override
-    public void deleteFavorites(List<Integer> ids) {
+    public RestResultVo deleteFavorites(List<Integer> ids) {
         favoriteMapper.deleteBatchIds(ids);
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", "");
     }
 
     @Override
-    public List<Favorite> getFavoritesByUsername(int pageIndex, int pageSize, String username) {
+    public RestResultVo getFavoritesByUsername(int pageIndex, int pageSize, String username) {
         Page page = new Page(pageIndex, pageSize);
-        return favoriteMapper.selectPage(page, new QueryWrapper<Favorite>().eq("username", username)).getRecords();
+        List<Favorite> favorites = favoriteMapper.selectPage(page, new QueryWrapper<Favorite>().eq("username", username)).getRecords();
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", favorites);
     }
 }

@@ -6,6 +6,7 @@ import org.awesome.Dao.RedisDao;
 import org.awesome.constants.Constant;
 import org.awesome.enums.Role;
 import org.awesome.models.Comment;
+import org.awesome.models.Favorite;
 import org.awesome.models.UpdateBlog;
 import org.awesome.models.User;
 import org.awesome.service.ICatalogueService;
@@ -20,6 +21,10 @@ import org.awesome.vo.RestResultVo;
 import org.awesome.vo.SignupVo;
 import org.awesome.vo.UserBasicInfoVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -338,6 +343,27 @@ public class UserController {
         }
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", mongoService.updateGuestReplyStatus(id));
     }
+
     /*****************通用工具类**************************/
 
+    @GetMapping("favorites")
+    @PreAuthorize("hasAnyAuthority('USER')")
+    public RestResultVo favorites(@RequestParam("pageIndex") int pageIndex, @RequestParam("pageSize") int pageSize) {
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername();
+        return favoriteService.getFavoritesByUsername(pageIndex, pageSize, username);
+    }
+
+    @DeleteMapping("favorite")
+    @PreAuthorize("hasAnyAuthority('USER')")
+    public RestResultVo deleteFavorites(@RequestBody List<Integer> ids) {
+        return favoriteService.deleteFavorites(ids);
+    }
+
+    @PostMapping("favorite")
+    @PreAuthorize("hasAnyAuthority('USER')")
+    public RestResultVo addFavorites(@RequestBody List<Favorite> favorites) {
+        return favoriteService.addFavorites(favorites);
+    }
 }
