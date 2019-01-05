@@ -1,5 +1,6 @@
 package org.awesome.mapper;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.SelectProvider;
@@ -47,4 +48,7 @@ public interface CatalogueMapper extends BaseMapper<Catalogue> {
 
     @Update("update t_catalogue set type = #{param2},title = #{param3} WHERE serial_number = #{param1}")
     int updateCatalogueTitle(String serialNumber,String type,String title);
+
+    @SelectProvider(type=QuerySql.class,method="countCatalogueAuthor")
+    List<JSONObject> countCatalogueAuthor(String username,String publicity);
 }

@@ -1,6 +1,7 @@
 package org.awesome.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.awesome.Dao.RedisDao;
 import org.awesome.mapper.CatalogueMapper;
@@ -87,5 +88,10 @@ public class CatalogueService implements ICatalogueService {
     @Override
     public Catalogue queryCatalogueBySerialNumber(String serialNumber){
         return catalogueMapper.queryCatalogueBySerialNumber(serialNumber);
+    }
+
+    @Override
+    public List<JSONObject> countCatalogueAuthor(String username,String publicity){
+        return catalogueMapper.countCatalogueAuthor(username,publicity);
     }
 }

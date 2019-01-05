@@ -123,8 +123,18 @@ public class MongoService implements IMongoService {
 
     @Override
     public List<GuestReply> queryGuestReplyList(String dealStatus){
-        Query query = new Query(Criteria.where("dealStatus").is(dealStatus));
+        Query query = new Query();
+        if(!StringUtils.isEmpty(dealStatus)){
+            query.addCriteria(Criteria.where("dealStatus").is(dealStatus));
+        }
+        query.with(new Sort(Sort.Direction.ASC,"dealStatus"));
         query.with(new Sort(Sort.Direction.DESC,"createTime"));
         return mongoTemplate.find(query,GuestReply.class);
+    }
+    @Override
+    public UpdateResult updateGuestReplyStatus(String id){
+        return mongoTemplate.updateFirst(new Query(Criteria.where("_id").is(id)),
+                Update.update("dealStatus", "1"),
+                GuestReply.class);
     }
 }

@@ -1,5 +1,6 @@
 package org.awesome.sql;
 
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.jdbc.SQL;
 import org.springframework.util.StringUtils;
 
@@ -32,11 +33,22 @@ public class QuerySql {
                     WHERE("t.best =#{best}");
                 }
                 if("heat".equals(params.get("orderType"))){
-                    ORDER_BY("t.comment_times desc");
+                    String sql = "t.comment_times desc";
+                    if(params.get("queryCount") !=null){
+                        sql += " limit "+params.get("queryCount");
+                    }else{
+                        sql += " limit 0,15";
+                    }
+                    ORDER_BY(sql);
                 }else{
-                    ORDER_BY("t.id desc");
+                    String sql = "t.id desc";
+                    if(params.get("queryCount") !=null){
+                        sql += " limit "+params.get("queryCount");
+                    }else{
+                        sql += " limit 0,15";
+                    }
+                    ORDER_BY(sql);
                 }
-
 
 
 
@@ -88,10 +100,29 @@ public class QuerySql {
 
                 }else{
 
-                    ORDER_BY("t.id desc limit 0, 10");
+                    ORDER_BY("t.id desc limit 0,10");
 
                 }
 
+            }
+        }.toString();
+
+    }
+
+    public String countCatalogueAuthor(String username,String publicity){
+        return new SQL() {
+            {
+                SELECT("t1.nickname,t1.username,t1.head_portrait_url,t.zongshu");
+                if(!StringUtils.isEmpty(publicity)){
+                    FROM("(select t.author,count(*) as zongshu from t_catalogue t where t.publicity=#{param2} GROUP BY t.author) t,t_user t1");
+                }else{
+                    FROM("(select t.author,count(*) as zongshu from t_catalogue t GROUP BY  t.author) t,t_user t1");
+                }
+                WHERE("t.author = t1.username");
+                if(!StringUtils.isEmpty(username)){
+                    WHERE("t1.username = #{param1}");
+                }
+                ORDER_BY("t.zongshu DESC ");
             }
         }.toString();
     }

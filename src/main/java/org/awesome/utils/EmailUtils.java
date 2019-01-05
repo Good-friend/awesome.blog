@@ -85,11 +85,11 @@ public class EmailUtils {
      */
     public void sendBy163(String content, String title, String... to) {
         //发件人邮箱地址
-        final String from = "xxxxx@163.com";
+        final String from = "geyaoln@163.com";
         //发件人称号，同邮箱地址
-        final String user = "xxxxx@163.com";
+        final String user = "葛耀的小站管理员";
         //发件人邮箱客户端授权码
-        final String password = "*********";
+        final String password = "gy323898163";
         final String mailHost = "smtp.163.com";
 
         Properties props = new Properties();

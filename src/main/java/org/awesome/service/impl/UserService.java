@@ -11,11 +11,18 @@ import org.awesome.models.*;
 import org.awesome.service.IUserService;
 import org.awesome.utils.CommonUtils;
 import org.awesome.vo.ArticleVo;
+import org.awesome.vo.RestResultVo;
+import org.awesome.vo.UserBasicInfoVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -46,6 +53,10 @@ public class UserService implements IUserService {
     private RedisDao redisDao;
     @Resource
     private MongoService mongoService;
+    @Autowired
+    BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @Override
     public User findUserByName(String username) {
@@ -151,7 +162,37 @@ public class UserService implements IUserService {
 
     @Override
     public void updateArticle(String serialNumber,String type,String content,String title) throws Exception{
-       catalogueMapper.updateCatalogueTitle(serialNumber, type, title);
-       connotationMapper.updateConnotation(serialNumber, content);
+        if(catalogueMapper.updateCatalogueTitle(serialNumber, type, title) != 1
+                || connotationMapper.updateConnotation(serialNumber, content) != 1){
+            throw new Exception("update article fail");
+        }
+    }
+
+    @Override
+    public void updateUserBasicInfo(UserBasicInfoVo userBasicInfoVo) throws Exception{
+        if(userMapper.updateUserBasicInfo(userBasicInfoVo) !=1){
+            throw new Exception("update user basicInfo fail");
+
+        }
+    }
+
+    @Override
+    public void updateUserPassword(String username,String oldPassword,String newPassword)throws Exception{
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, oldPassword);
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(authenticationToken);
+            userMapper.updateUserPassword(username,bCryptPasswordEncoder.encode(newPassword));
+        } catch (Exception e) {
+            LOG.error("Authenticate failed [{}]", username);
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    @Override
+    public void updateUserHeadImg(String username, String imgUrl)throws Exception{
+        if(userMapper.updateUserHeadImg(username,imgUrl) !=1){
+            throw new Exception("update user headPortraitUrl fail");
+        }
     }
 }

@@ -1,5 +1,6 @@
 package org.awesome.service;
 
+import com.alibaba.fastjson.JSONObject;
 import org.awesome.models.Catalogue;
 import org.awesome.models.OperationFlow;
 import org.awesome.vo.CatalogueVo;
@@ -31,4 +32,6 @@ public interface ICatalogueService {
     int updateCatalogueStick(String serialNumber,boolean stick);
 
     Catalogue queryCatalogueBySerialNumber(String serialNumber);
+
+    List<JSONObject> countCatalogueAuthor(String username,String publicity);
 }

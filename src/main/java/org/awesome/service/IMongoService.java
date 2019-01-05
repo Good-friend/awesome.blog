@@ -33,4 +33,6 @@ public interface IMongoService {
     void saveGuestReply(GuestReply guestReply);
 
     List<GuestReply> queryGuestReplyList(String dealStatus);
+
+    UpdateResult updateGuestReplyStatus(String id);
 }

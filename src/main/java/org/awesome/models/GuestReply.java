@@ -8,6 +8,8 @@ import lombok.Setter;
 public class GuestReply {
 
 
+    private String id;
+
     private String createTime;
 
     private String content;

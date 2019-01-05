@@ -10,6 +10,7 @@ import org.awesome.service.IGatewayService;
 import org.awesome.service.IIdentifyCodeService;
 import org.awesome.service.impl.MongoService;
 import org.awesome.utils.CommonUtils;
+import org.awesome.utils.EmailUtils;
 import org.awesome.vo.LoginVo;
 import org.awesome.vo.RestResultVo;
 import org.awesome.vo.SignupVo;
@@ -33,6 +34,8 @@ public class GatewayController {
     private IIdentifyCodeService identifyCodeService;
     @Resource
     private MongoService mongoService;
+    @Resource
+    private EmailUtils emailUtils;
 
     @PostMapping("login")
     public RestResultVo login(@RequestBody LoginVo loginVo) {
@@ -75,6 +78,4 @@ public class GatewayController {
         mongoService.saveUpdateBlog(UpdateBlog);
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
     }
-
-
 }

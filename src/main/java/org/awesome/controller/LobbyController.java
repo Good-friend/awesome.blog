@@ -58,6 +58,10 @@ public class LobbyController {
         if (orderType != null) {
             queryParams.put("orderType", orderType);
         }
+        String queryCountStr = request.getParameter("queryCountStr");
+        if (queryCountStr != null) {
+            queryParams.put("queryCount", queryCountStr);
+        }
         String stick = request.getParameter("stick");
         if (stick != null) {
             queryParams.put("stick", "0");
@@ -71,6 +75,7 @@ public class LobbyController {
             resObj.put("stickList", catalogueService.queryCatalogue(stickParams));
         }
         resObj.put("catalogueList", catalogueService.queryCatalogue(queryParams));
+        resObj.put("countByAuthor", catalogueService.countCatalogueAuthor(null,"1"));
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", resObj);
 
     }
@@ -103,7 +108,9 @@ public class LobbyController {
         Map<String, String> queryParams = new HashMap<String, String>();
         queryParams.put("username",username);
         User user = userService.redisGetUser(username);
+        String publicity = null;
         if(user == null){
+            publicity = "1";
             queryParams.put("lookOther","true");
             user = userService.findUserByName(username);
             user.setPassword("");
@@ -129,6 +136,8 @@ public class LobbyController {
             }
         }
         resObj.put("ownCommentInfoList",ownCommentInfoList);
+        List<JSONObject> countByAuthorList = catalogueService.countCatalogueAuthor(username,publicity);
+        resObj.put("countByAuthor",(countByAuthorList == null||countByAuthorList.size() < 1)?null:countByAuthorList.get(0));
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", resObj);
     }
 

@@ -2,7 +2,9 @@ package org.awesome.models;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
@@ -10,6 +12,8 @@ import java.util.List;
 @TableName("t_user")
 @Setter
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
     private String username;
     private String password;
@@ -21,6 +25,7 @@ public class User {
     private String city;
     private String createDate;
     private String description;
+    private String email;
     @TableField(exist = false)
     private List<String> Authorities;
 
