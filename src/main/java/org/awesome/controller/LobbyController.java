@@ -75,7 +75,7 @@ public class LobbyController {
             resObj.put("stickList", catalogueService.queryCatalogue(stickParams));
         }
         resObj.put("catalogueList", catalogueService.queryCatalogue(queryParams));
-        resObj.put("countByAuthor", catalogueService.countCatalogueAuthor(null,"1"));
+        resObj.put("countByAuthor", catalogueService.countCatalogueAuthor(null,null));
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", resObj);
 
     }

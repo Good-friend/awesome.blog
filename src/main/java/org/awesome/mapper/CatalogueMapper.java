@@ -50,5 +50,5 @@ public interface CatalogueMapper extends BaseMapper<Catalogue> {
     int updateCatalogueTitle(String serialNumber,String type,String title);
 
     @SelectProvider(type=QuerySql.class,method="countCatalogueAuthor")
-    List<JSONObject> countCatalogueAuthor(String username,String publicity);
+    List<JSONObject> countCatalogueAuthor(Map<String,String> params);
 }

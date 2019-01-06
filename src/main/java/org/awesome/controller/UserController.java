@@ -5,10 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import org.awesome.Dao.RedisDao;
 import org.awesome.constants.Constant;
 import org.awesome.enums.Role;
-import org.awesome.models.Comment;
-import org.awesome.models.Favorite;
-import org.awesome.models.UpdateBlog;
-import org.awesome.models.User;
+import org.awesome.models.*;
 import org.awesome.service.ICatalogueService;
 import org.awesome.service.IFavoriteService;
 import org.awesome.service.IGatewayService;
@@ -16,10 +13,7 @@ import org.awesome.service.IUserService;
 import org.awesome.service.impl.MongoService;
 import org.awesome.utils.CommonUtils;
 import org.awesome.utils.EmailUtils;
-import org.awesome.vo.ArticleVo;
-import org.awesome.vo.RestResultVo;
-import org.awesome.vo.SignupVo;
-import org.awesome.vo.UserBasicInfoVo;
+import org.awesome.vo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -29,8 +23,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.MessageFormat;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @RestController
 @RequestMapping("api/user/")
@@ -270,18 +263,6 @@ public class UserController {
 
     }
 
-    /**
-     * 更新网站日志
-     *
-     * @param UpdateBlog
-     * @return
-     */
-    @PostMapping("saveUpdateBlogs")
-    public RestResultVo saveUpdateBlogs(@RequestBody UpdateBlog UpdateBlog) {
-        mongoService.saveUpdateBlog(UpdateBlog);
-        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
-    }
-
     @PostMapping("/saveComment")
     public RestResultVo saveComment(@RequestBody Comment comment) {
         mongoService.saveComment(comment);
@@ -344,26 +325,86 @@ public class UserController {
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", mongoService.updateGuestReplyStatus(id));
     }
 
+    /**
+     * 网站日志更新
+     * @param updateBlog
+     * @return
+     */
+    @PostMapping("saveUpdateBlogs")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    public RestResultVo saveUpdateBlogs(@RequestBody UpdateBlog updateBlog){
+        if(!"1".equals(updateBlog.validate())){
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, updateBlog.validate(), null);
+        }
+        mongoService.saveUpdateBlog(updateBlog);
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
+    }
     /*****************通用工具类**************************/
 
-    @GetMapping("favorites")
-    @PreAuthorize("hasAnyAuthority('USER')")
-    public RestResultVo favorites(@RequestParam("pageIndex") int pageIndex, @RequestParam("pageSize") int pageSize) {
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    @GetMapping("queryMyArticle")
+    //@PreAuthorize("hasAnyAuthority('ADMIN')")
+    //@RequestParam("pageIndex") int pageIndex, @RequestParam("pageSize") int pageSize
+    public RestResultVo queryMyArticle(@RequestParam("username") String username) {
+        /*final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String username = userDetails.getUsername();
-        return favoriteService.getFavoritesByUsername(pageIndex, pageSize, username);
+        String username = userDetails.getUsername();*/
+
+        //return favoriteService.getFavoritesByUsername(pageIndex, pageSize, username);
+        User user = userService.redisGetUser(username);
+        if (StringUtils.isEmpty(user)) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户未登陆或无此用户", null);
+        }
+        JSONObject resObj = new JSONObject();
+        Map<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("username",username);
+        resObj.put("myCatalogue",catalogueService.queryCatalogueByParams(queryParams));
+        resObj.put("statistics",catalogueService.countCatalogueAuthor(username,null));
+        //resObj.put("myCollection",favoriteService.getFavoritesByUsername(username));
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "",resObj);
     }
 
-    @DeleteMapping("favorite")
-    @PreAuthorize("hasAnyAuthority('USER')")
-    public RestResultVo deleteFavorites(@RequestBody List<Integer> ids) {
-        return favoriteService.deleteFavorites(ids);
+    @GetMapping("queryMyCollection")
+    public RestResultVo queryMyCollection(@RequestParam("username") String username) {
+        User user = userService.redisGetUser(username);
+        if (StringUtils.isEmpty(user)) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户未登陆或无此用户", null);
+        }
+        JSONObject resObj = new JSONObject();
+        Map<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("username",username);
+        catalogueService.countCatalogueAuthor(username,null);
+        resObj.put("statistics",catalogueService.countCatalogueAuthor(username,null));
+        resObj.put("myCollection",favoriteService.getFavoritesByUsername(username));
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "",resObj);
     }
 
-    @PostMapping("favorite")
-    @PreAuthorize("hasAnyAuthority('USER')")
-    public RestResultVo addFavorites(@RequestBody List<Favorite> favorites) {
-        return favoriteService.addFavorites(favorites);
+    //@DeleteMapping("favorite")
+    @GetMapping("delFavorites")
+    //@PreAuthorize("hasAnyAuthority('USER')")
+    public RestResultVo deleteFavorites(@RequestParam("id") String id) {
+        try {
+            favoriteService.delFavorite(id);
+            return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
+        }catch (Exception e){
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, e.getMessage(), null);
+        }
+    }
+
+    @PostMapping("saveFavorite")
+    //@PreAuthorize("hasAnyAuthority('USER')")
+    public RestResultVo addFavorites(@RequestBody Favorite favorites) {
+        if(!"1".equals(favorites.validate())){
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, favorites.validate(), null);
+        }
+        Favorite oldFavorite = favoriteService.queryFavorite(favorites.getSerialNumber(),favorites.getUsername());
+        if(oldFavorite != null){
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED,"您已收藏！请勿重复操作", null);
+        }
+        try {
+            favoriteService.saveFavorite(favorites);
+            return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
+        }catch (Exception e){
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, e.getMessage(), null);
+        }
     }
 }

@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.awesome.mapper.FavoriteMapper;
 import org.awesome.models.Favorite;
 import org.awesome.service.IFavoriteService;
+import org.awesome.vo.CatalogueVo;
+import org.awesome.vo.FavoriteVo;
 import org.awesome.vo.RestResultVo;
 import org.springframework.stereotype.Service;
 
@@ -37,4 +39,29 @@ public class FavoriteService implements IFavoriteService {
         List<Favorite> favorites = favoriteMapper.selectPage(page, new QueryWrapper<Favorite>().eq("username", username)).getRecords();
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", favorites);
     }
+
+    @Override
+    public void saveFavorite(Favorite favorite) throws Exception{
+        if(favoriteMapper.insert(favorite) < 1){
+            throw new Exception("添加收藏失败");
+        }
+    }
+
+    @Override
+    public void delFavorite(String id)throws Exception{
+       if(favoriteMapper.deleteById(id)< 1){
+            throw new Exception("取消收藏失败");
+        }
+    }
+
+    @Override
+    public List<FavoriteVo> getFavoritesByUsername(String username){
+        return favoriteMapper.getFavoritesByUsername(username);
+    }
+
+    @Override
+    public Favorite queryFavorite(String serialNumber,String username){
+        return favoriteMapper.queryFavorite(serialNumber,username);
+    }
+
 }

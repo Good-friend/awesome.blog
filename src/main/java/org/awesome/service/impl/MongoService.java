@@ -38,25 +38,14 @@ public class MongoService implements IMongoService {
     @Override
     public List<UpdateBlog> queryUpdateBlogList(){
         Query query = new Query();
-        query.with(new Sort(Sort.Direction.DESC,"version"));
+        query.with(new Sort(Sort.Direction.DESC,"updateDate"));
         return mongoTemplate.find(query,UpdateBlog.class);
     }
 
     @Override
     public void saveUpdateBlog(UpdateBlog updateBlog){
         updateBlog.setUpdateDate(CommonUtils.getNowDate());
-        updateBlog.setVersion(getVersion());
         mongoTemplate.save(updateBlog);
-    }
-    private String getVersion(){
-        String version = (String)redisDao.get("version");
-        if(version == null){
-            version = String.valueOf(0.00);
-        }else{
-            version = String.valueOf(Double.parseDouble(version)+0.01);
-        }
-        redisDao.set("version",version);
-        return version;
     }
 
     @Override

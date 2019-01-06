@@ -35,4 +35,5 @@ public interface IMongoService {
     List<GuestReply> queryGuestReplyList(String dealStatus);
 
     UpdateResult updateGuestReplyStatus(String id);
+
 }

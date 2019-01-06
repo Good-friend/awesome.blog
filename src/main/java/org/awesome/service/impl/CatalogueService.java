@@ -92,6 +92,9 @@ public class CatalogueService implements ICatalogueService {
 
     @Override
     public List<JSONObject> countCatalogueAuthor(String username,String publicity){
-        return catalogueMapper.countCatalogueAuthor(username,publicity);
+        Map<String,String> params = new HashMap<String,String>();
+        params.put("username",username);
+        params.put("publicity",publicity);
+        return catalogueMapper.countCatalogueAuthor(params);
     }
 }

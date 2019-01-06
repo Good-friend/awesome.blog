@@ -68,14 +68,5 @@ public class GatewayController {
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", mongoService.queryUpdateBlogList());
     }
 
-    /**
-     * 网站日志更新
-     * @param UpdateBlog
-     * @return
-     */
-    @PostMapping("saveUpdateBlogs")
-    public RestResultVo saveUpdateBlogs(@RequestBody UpdateBlog UpdateBlog){
-        mongoService.saveUpdateBlog(UpdateBlog);
-        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
-    }
+
 }

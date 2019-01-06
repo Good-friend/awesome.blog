@@ -109,20 +109,33 @@ public class QuerySql {
 
     }
 
-    public String countCatalogueAuthor(String username,String publicity){
+    public String countCatalogueAuthor(Map<String,String> params){
         return new SQL() {
             {
-                SELECT("t1.nickname,t1.username,t1.head_portrait_url,t.zongshu");
-                if(!StringUtils.isEmpty(publicity)){
-                    FROM("(select t.author,count(*) as zongshu from t_catalogue t where t.publicity=#{param2} GROUP BY t.author) t,t_user t1");
+                SELECT("t.nickname,t.username,t.head_portrait_url,IFNULL(t1.cataCount,0) as cataCount,IFNULL(t2.favorCount,0) as favorCount");
+                FROM("t_user t");
+                if(!StringUtils.isEmpty(params.get("publicity"))){
+                    LEFT_OUTER_JOIN("(select t.author,count(*) as cataCount from t_catalogue t where t.publicity=#{publicity} GROUP BY t.author) t1 ON t.username = t1.author");
                 }else{
-                    FROM("(select t.author,count(*) as zongshu from t_catalogue t GROUP BY  t.author) t,t_user t1");
+                    LEFT_OUTER_JOIN("(select t.author,count(*) as cataCount from t_catalogue t GROUP BY  t.author) t1 ON t.username = t1.author");
                 }
-                WHERE("t.author = t1.username");
-                if(!StringUtils.isEmpty(username)){
-                    WHERE("t1.username = #{param1}");
+                LEFT_OUTER_JOIN("(select t.username,count(*) as favorCount from t_favorite t GROUP BY t.username) t2 ON t.username = t2.username");
+                //WHERE("t.username = t1.author and t.username = t2.username");
+                if(!StringUtils.isEmpty(params.get("username"))){
+                    WHERE("t.username = #{username}");
                 }
-                ORDER_BY("t.zongshu DESC ");
+                ORDER_BY("t1.cataCount DESC LIMIT 0,4");
+            }
+        }.toString();
+    }
+
+
+    public String getFavoritesByUsername(String username) {
+        return new SQL() {
+            {
+                SELECT("t1.id as favoriteId,t.serial_number as serialNumber,t.title,t1.create_time as createTime ");
+                FROM("t_catalogue t,t_favorite t1");
+                WHERE("t.serial_number = t1.serial_number and t1.username = #{username}");
             }
         }.toString();
     }
