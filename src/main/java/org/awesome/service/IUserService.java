@@ -5,6 +5,7 @@ import org.awesome.models.User;
 import org.awesome.vo.ArticleVo;
 import org.awesome.vo.RestResultVo;
 import org.awesome.vo.UserBasicInfoVo;
+import org.awesome.vo.UserCommentVo;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -28,4 +29,6 @@ public interface IUserService {
     void updateUserPassword(String username,String oldPassword,String newPassword)throws Exception;
 
     void updateUserHeadImg(String username, String imgUrl)throws Exception;
+
+    List<UserCommentVo> queryUserCommentsList(String username,String defendant);
 }

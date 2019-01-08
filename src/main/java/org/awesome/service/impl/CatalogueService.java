@@ -9,10 +9,12 @@ import org.awesome.mapper.ConnotationMapper;
 import org.awesome.models.Catalogue;
 import org.awesome.models.OperationFlow;
 import org.awesome.service.ICatalogueService;
+import org.awesome.utils.EmailUtils;
 import org.awesome.vo.CatalogueVo;
 import org.awesome.vo.RestResultVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

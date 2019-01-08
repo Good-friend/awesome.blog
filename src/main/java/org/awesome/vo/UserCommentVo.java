@@ -21,4 +21,7 @@ public class UserCommentVo {
 
     private String createTime;
 
+    private String nickname;
+
+    private String headPortraitUrl;
 }

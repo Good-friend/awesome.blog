@@ -40,8 +40,6 @@ public class UserController {
     @Autowired
     private IGatewayService gatewayService;
     @Autowired
-    private EmailUtils emailUtils;
-    @Autowired
     private IFavoriteService favoriteService;
 
     /**
@@ -110,17 +108,18 @@ public class UserController {
         if (!"1".equals(valiStr)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "注册失败：" + valiStr, null);
         }
+        String vercode = vo.getVercode();
+        String key = MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, vo.getUsername());
+        Object code = redisDao.get(key);
+        redisDao.del(key);
+        if (code == null || ((int) code) != Integer.parseInt(vercode)) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "人类验证错误", null);
+        }
         String password = getStringRandom(8);
         User user = new User(vo.getUsername(), password, "1", 0, vo.getNickname(), "1".equals(vo.getSex()) ? "http://120.79.240.9:8080/headImg/6.jpg" : "http://120.79.240.9:8080/headImg/8.jpg", vo.getSex(), "地球", CommonUtils.getNowDate(), "大家在这相聚是缘分", vo.getEmail(), null);
         RestResultVo restResultVo = gatewayService.register(user);
         if (restResultVo.getCode() == RestResultVo.RestResultCode.SUCCESS) {
-            String content = "尊敬的" + vo.getNickname() + "：" + System.getProperty("line.separator") +
-                    "      您好，非常感谢您加入【葛耀的小站】（地址：http://www.geyaoln.xin），成为我们中的一员。以后请多多指教。" + System.getProperty("line.separator") +
-                    "      以下是您的会员信息：" + System.getProperty("line.separator") +
-                    "      登录名：" + vo.getUsername() + System.getProperty("line.separator") +
-                    "      密码：" + password + System.getProperty("line.separator") +
-                    "    您可以登陆【葛耀的小站】我的信息里修改密码";
-            emailUtils.sendBy163(content, "【葛耀的小站】会员信息", vo.getEmail());
+            gatewayService.registerSendEmail(vo.getNickname(),vo.getUsername(),password,vo.getEmail());
         }
         return restResultVo;
     }
@@ -406,5 +405,14 @@ public class UserController {
         }catch (Exception e){
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, e.getMessage(), null);
         }
+    }
+
+    @GetMapping("queryUserSelfReciveMessage")
+    public RestResultVo queryUserSelfReciveMessage(@RequestParam("username") String username){
+        User user = userService.redisGetUser(username);
+        if (StringUtils.isEmpty(user)) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户未登陆或无此用户", null);
+        }
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "",  userService.queryUserCommentsList(null,username));
     }
 }

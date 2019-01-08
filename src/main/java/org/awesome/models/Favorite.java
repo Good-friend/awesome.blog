@@ -7,7 +7,6 @@ import org.springframework.util.StringUtils;
 @Data
 @TableName("t_favorite")
 public class Favorite {
-    public int Id;
 
     public String username;
 

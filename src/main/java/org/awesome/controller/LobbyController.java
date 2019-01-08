@@ -119,23 +119,7 @@ public class LobbyController {
         resObj.put("user",user);
         resObj.put("ownCatalogue",catalogueService.queryCatalogueByParams(queryParams));
 
-        List<Comment> ownCommentList = mongoService.queryUserCommentInfo(username);
-        List<UserCommentVo> ownCommentInfoList = new ArrayList<UserCommentVo>();
-        if(ownCommentList != null){
-            for (Comment comment:ownCommentList) {
-                Catalogue catalogue =catalogueService.queryCatalogueBySerialNumber(comment.getSerialNumber());
-                if(catalogue == null){
-                    continue;
-                }
-                ownCommentInfoList.add(new UserCommentVo(comment.getSerialNumber(),
-                        catalogue.getTitle(),
-                        username,
-                        comment.getReplyContent(),
-                        comment.getCreateTime())
-                );
-            }
-        }
-        resObj.put("ownCommentInfoList",ownCommentInfoList);
+        resObj.put("ownCommentInfoList",userService.queryUserCommentsList(username,null));
         List<JSONObject> countByAuthorList = catalogueService.countCatalogueAuthor(username,publicity);
         resObj.put("countByAuthor",(countByAuthorList == null||countByAuthorList.size() < 1)?null:countByAuthorList.get(0));
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", resObj);

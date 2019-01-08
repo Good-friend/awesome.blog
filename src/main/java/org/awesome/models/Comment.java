@@ -25,5 +25,7 @@ public class Comment {
 
     private String authorHeadUrl;
 
+    private String defendant;//被回复人username
+
 
 }

@@ -36,4 +36,6 @@ public interface IMongoService {
 
     UpdateResult updateGuestReplyStatus(String id);
 
+    List<Comment> queryCommentByDefendant(String defendant);
+
 }

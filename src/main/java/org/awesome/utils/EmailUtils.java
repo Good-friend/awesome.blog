@@ -18,6 +18,7 @@ import java.util.Properties;
 public class EmailUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(EmailUtils.class);
+    private static final String smtpPort = "465";
 
     /**
      * 使用QQ邮箱服务器发送邮件
@@ -95,6 +96,10 @@ public class EmailUtils {
         Properties props = new Properties();
         props.put("mail.smtp.host", mailHost);
         props.put("mail.smtp.auth", "true");
+        props.setProperty("mail.smtp.port", smtpPort);
+        props.setProperty("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        props.setProperty("mail.smtp.socketFactory.fallback", "false");
+        props.setProperty("mail.smtp.socketFactory.port", smtpPort);
         Session session = Session.getDefaultInstance(props);
         session.setDebug(true);
         MimeMessage message = new MimeMessage(session);
@@ -127,6 +132,7 @@ public class EmailUtils {
             //关闭连接
             transport.close();
         } catch (Exception e) {
+            e.printStackTrace();
             LOG.error("Send email by 163 error. ", e.getMessage());
         }
     }

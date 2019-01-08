@@ -120,10 +120,18 @@ public class MongoService implements IMongoService {
         query.with(new Sort(Sort.Direction.DESC,"createTime"));
         return mongoTemplate.find(query,GuestReply.class);
     }
+
     @Override
     public UpdateResult updateGuestReplyStatus(String id){
         return mongoTemplate.updateFirst(new Query(Criteria.where("_id").is(id)),
                 Update.update("dealStatus", "1"),
                 GuestReply.class);
+    }
+
+    @Override
+    public List<Comment> queryCommentByDefendant(String defendant){
+        Query query = new Query(Criteria.where("defendant").is(defendant));
+        query.with(new Sort(Sort.Direction.DESC,"createTime"));
+        return mongoTemplate.find(query,Comment.class);
     }
 }

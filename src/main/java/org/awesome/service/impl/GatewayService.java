@@ -10,6 +10,7 @@ import org.awesome.models.Authority;
 import org.awesome.models.User;
 import org.awesome.security.JwtUserDetailService;
 import org.awesome.service.IGatewayService;
+import org.awesome.utils.EmailUtils;
 import org.awesome.utils.JwtTokenUtil;
 import org.awesome.vo.RestResultVo;
 import org.slf4j.Logger;
@@ -51,6 +52,8 @@ public class GatewayService implements IGatewayService {
 
     @Autowired
     private RedisDao redisDao;
+    @Autowired
+    private EmailUtils emailUtils;
 
 
     @Override
@@ -130,5 +133,25 @@ public class GatewayService implements IGatewayService {
         LOG.error("refresh token failed [{}]", oldToken);
 
         return new RestResultVo(RestResultVo.RestResultCode.FAILED, "token is expired. Login again, please.", null);
+    }
+
+    @Override
+    public void registerSendEmail(String nickname,String username,String password,String email){
+        System.out.println("初始化邮件发送.......");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("邮件开始发送！");
+                String content = "尊敬的" + nickname + "：" + System.getProperty("line.separator") +
+                        "      您好，非常感谢您加入【葛耀的小站】（地址：http://www.geyaoln.xin），成为我们中的一员。以后请多多指教。" + System.getProperty("line.separator") +
+                        "      以下是您的会员信息：" + System.getProperty("line.separator") +
+                        "      登录名：" + username + System.getProperty("line.separator") +
+                        "      密码：" + password + System.getProperty("line.separator") +
+                        "    您可以登陆【葛耀的小站】我的信息里修改密码";
+                LOG.info("邮件内容：[{}]", content);
+                emailUtils.sendBy163(content, "【葛耀的小站】会员信息", email);
+                System.out.println("邮件发送成功！");
+            }
+        }).start();
     }
 }

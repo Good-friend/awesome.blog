@@ -13,6 +13,7 @@ import org.awesome.utils.CommonUtils;
 import org.awesome.vo.ArticleVo;
 import org.awesome.vo.RestResultVo;
 import org.awesome.vo.UserBasicInfoVo;
+import org.awesome.vo.UserCommentVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -24,6 +25,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -194,5 +196,34 @@ public class UserService implements IUserService {
         if(userMapper.updateUserHeadImg(username,imgUrl) !=1){
             throw new Exception("update user headPortraitUrl fail");
         }
+    }
+
+    @Override
+    public List<UserCommentVo> queryUserCommentsList(String username,String defendant){
+        List<Comment> ownCommentList = null;
+        if(!StringUtils.isEmpty(username)){
+            ownCommentList = mongoService.queryUserCommentInfo(username);
+        }else
+        if(!StringUtils.isEmpty(defendant)){
+            ownCommentList = mongoService.queryCommentByDefendant(defendant);
+        }
+        List<UserCommentVo> ownCommentInfoList = new ArrayList<UserCommentVo>();
+        if(ownCommentList != null){
+            for (Comment comment:ownCommentList) {
+                Catalogue catalogue =catalogueMapper.queryCatalogueBySerialNumber(comment.getSerialNumber());
+                if(catalogue == null){
+                    continue;
+                }
+                ownCommentInfoList.add(new UserCommentVo(comment.getSerialNumber(),
+                        catalogue.getTitle(),
+                        comment.getUsername(),
+                        comment.getReplyContent(),
+                        comment.getCreateTime(),
+                        comment.getAuthor(),
+                        comment.getAuthorHeadUrl())
+                );
+            }
+        }
+        return ownCommentInfoList;
     }
 }

@@ -9,4 +9,6 @@ public interface IGatewayService {
     RestResultVo register(User user);
 
     RestResultVo refreshToken(String oldToken);
+
+    void registerSendEmail(String nickname,String username,String password,String email);
 }

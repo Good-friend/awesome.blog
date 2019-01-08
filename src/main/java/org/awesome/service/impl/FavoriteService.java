@@ -5,9 +5,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.awesome.mapper.FavoriteMapper;
 import org.awesome.models.Favorite;
 import org.awesome.service.IFavoriteService;
+import org.awesome.utils.CommonUtils;
 import org.awesome.vo.CatalogueVo;
 import org.awesome.vo.FavoriteVo;
 import org.awesome.vo.RestResultVo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -15,7 +18,7 @@ import java.util.List;
 
 @Service
 public class FavoriteService implements IFavoriteService {
-
+    private static final Logger LOG = LoggerFactory.getLogger(FavoriteService.class);
     @Resource
     private FavoriteMapper favoriteMapper;
 
@@ -42,7 +45,16 @@ public class FavoriteService implements IFavoriteService {
 
     @Override
     public void saveFavorite(Favorite favorite) throws Exception{
-        if(favoriteMapper.insert(favorite) < 1){
+        favorite.setCreateTime(CommonUtils.getNowTime());
+
+        int saveRes = 0;
+        try{
+            saveRes = favoriteMapper.insert(favorite);
+        }catch (Exception e){
+            LOG.error("添加收藏失败："+e.getMessage());
+        }
+
+        if( saveRes < 1){
             throw new Exception("添加收藏失败");
         }
     }
