@@ -14,4 +14,5 @@ public class UserBasicInfoVo {
     private String city;
     private String description;
     private String email;
+
 }

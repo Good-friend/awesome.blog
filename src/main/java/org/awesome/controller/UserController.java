@@ -66,7 +66,7 @@ public class UserController {
     @GetMapping("getUserInfo")
     public RestResultVo queryUserInfo(@RequestParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
-            return null;
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "参数有误，无权操作", null);
         }
         User user = userService.redisGetUser(username);
         if (user == null) {
@@ -77,6 +77,19 @@ public class UserController {
         }
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null, user);
     }
+
+    @GetMapping("getAllUserInfo")
+    public RestResultVo getAllUserInfo(@RequestParam("username") String username) {
+        if (StringUtils.isEmpty(username)) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "参数有误，无权操作", null);
+        }
+        User user = userService.redisGetUser(username);
+        if (StringUtils.isEmpty(user) || !Role.ADMIN.getValue().equals(user.getAuthorities().get(0))) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "抱歉您无权操作", null);
+        }
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null,userService.findAllUser());
+    }
+
 
     //生成随机数字和字母,
     private static String getStringRandom(int length) {
@@ -121,6 +134,10 @@ public class UserController {
         if (restResultVo.getCode() == RestResultVo.RestResultCode.SUCCESS) {
             gatewayService.registerSendEmail(vo.getNickname(),vo.getUsername(),password,vo.getEmail());
         }
+        List<String> list = new ArrayList<>();
+        list.add("USER");
+        user.setAuthorities(list);
+        restResultVo.setData(user);
         return restResultVo;
     }
 
@@ -198,6 +215,24 @@ public class UserController {
             return new RestResultVo(RestResultVo.RestResultCode.EXCEPTION, "修改头像异常", null);
         }
 
+    }
+
+    @GetMapping("updateUserStatus")
+    public RestResultVo updateUserStatus(@RequestParam("operator") String operator,@RequestParam("username") String username,@RequestParam("status") String status) {
+        if (StringUtils.isEmpty(operator)) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "参数有误，无权操作", null);
+        }
+        User user = userService.redisGetUser(operator);
+        if (StringUtils.isEmpty(user) || !Role.ADMIN.getValue().equals(user.getAuthorities().get(0))) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "抱歉您无权操作", null);
+        }
+        try {
+            userService.updateUserStatus(username,status);
+            return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", user);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new RestResultVo(RestResultVo.RestResultCode.EXCEPTION, "操作异常", null);
+        }
     }
 
     /**

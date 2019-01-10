@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -225,5 +226,17 @@ public class UserService implements IUserService {
             }
         }
         return ownCommentInfoList;
+    }
+
+    @Override
+    public List<User> findAllUser(){
+        return userMapper.queryAllUser();
+    }
+
+    @Override
+    public void updateUserStatus(String username, String status)throws Exception{
+        if(userMapper.updateUserStatus(username,status) !=1){
+            throw new Exception("update user status fail");
+        }
     }
 }

@@ -14,6 +14,8 @@ public interface IUserService {
 
     User findUserByName(String username);
 
+    List<User> findAllUser();
+
     User redisGetUser(String username);
 
     List<String> findUserAuthoritiesByName(String username);
@@ -29,6 +31,8 @@ public interface IUserService {
     void updateUserPassword(String username,String oldPassword,String newPassword)throws Exception;
 
     void updateUserHeadImg(String username, String imgUrl)throws Exception;
+
+    void updateUserStatus(String username, String status)throws Exception;
 
     List<UserCommentVo> queryUserCommentsList(String username,String defendant);
 }
