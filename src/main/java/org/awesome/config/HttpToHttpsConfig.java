@@ -33,7 +33,7 @@ public class HttpToHttpsConfig {
     public Connector connector() {
         Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
         connector.setScheme("http");
-        connector.setPort(8080);
+        connector.setPort(9500);
         connector.setSecure(false);
         connector.setRedirectPort(8443);
         return connector;
