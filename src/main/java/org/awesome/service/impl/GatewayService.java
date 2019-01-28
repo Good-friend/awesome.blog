@@ -1,5 +1,6 @@
 package org.awesome.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.awesome.Dao.RedisDao;
 import org.awesome.constants.Constant;
@@ -10,6 +11,7 @@ import org.awesome.models.Authority;
 import org.awesome.models.User;
 import org.awesome.security.JwtUserDetailService;
 import org.awesome.service.IGatewayService;
+import org.awesome.utils.CommonUtils;
 import org.awesome.utils.EmailUtils;
 import org.awesome.utils.JwtTokenUtil;
 import org.awesome.vo.RestResultVo;
@@ -25,6 +27,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.text.MessageFormat;
 
 @Service
@@ -54,21 +57,23 @@ public class GatewayService implements IGatewayService {
     private RedisDao redisDao;
     @Autowired
     private EmailUtils emailUtils;
+    @Autowired
+    private UserService userService;
 
 
     @Override
-    public RestResultVo login(String username, String password, int identityCode) {
+    public RestResultVo login(String username, String password, int identityCode, HttpServletRequest request) {
         LOG.info("[{}] attempt login", username);
 
         //校验验证码
-        String key = MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, username);
+        String key = MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, CommonUtils.getIpAddress(request));
 
         Object code = redisDao.get(key);
 
         if (code == null || ((int) code) != identityCode) {
             redisDao.del(key);
             LOG.error("The identifyCode invalid [{}] provided.", username);
-            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "identifyCode invalid.", null);
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "人类验证错误", null);
         }
 
         redisDao.del(key);
@@ -81,14 +86,17 @@ public class GatewayService implements IGatewayService {
         } catch (AuthenticationException e) {
             LOG.error("Authenticate failed [{}]", username);
 
-            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "Authenticate failed.", null);
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户名或密码错误", null);
         }
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetails userDetails = jwtUserDetailService.loadUserByUsername(username);
 
         LOG.info("[{}] login successfully.", username);
-
+        User user = userService.findUserByName(username);
+        user.setPassword("");
+        user.setAuthorities(userService.findUserAuthoritiesByName(username));
+        redisDao.set(username, JSON.toJSONString(user),Constant.JWT_TIMEOUT);
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null, jwtTokenUtil.generateToken(userDetails));
     }
 

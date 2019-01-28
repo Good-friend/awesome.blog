@@ -1,11 +1,13 @@
 package org.awesome.models;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * 评论
  */
+@Data
 @Setter
 @Getter
 public class Comment {

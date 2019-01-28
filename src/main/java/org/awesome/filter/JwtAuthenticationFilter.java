@@ -37,14 +37,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         String header = request.getHeader(Constant.JWT_HEADER);
-
         if (header != null && header.startsWith(Constant.JWT_PREFIX)) {
             String token = header.replace(Constant.JWT_PREFIX, "");
             String username = jwtTokenUtil.getUsernameFromToken(token);
-
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = jwtUserDetailService.loadUserByUsername(username);
-
                 boolean isValidate = jwtTokenUtil.validateToken(token, userDetails);
                 boolean isExpired = jwtTokenUtil.isExpired(token);
                 boolean canPass = false;
@@ -60,7 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         redisDao.set(token, newToken, Constant.REDIS_TOKEN_TIMEOUT);
 
                         //response中返回新token
-                        response.setHeader(Constant.JWT_HEADER, Constant.JWT_PREFIX + newToken);
+                        response.setHeader(Constant.JWT_HEADER, newToken);
                     }
                 } else if (isValidate) {
                     //如果token在黑名单中，说明该token已经被并发请求刷新，并且已经返回了新token，但该token一分钟之内就会失效
@@ -80,7 +77,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         }
-
         chain.doFilter(request, response);
     }
 }

@@ -6,10 +6,7 @@ import org.awesome.Dao.RedisDao;
 import org.awesome.constants.Constant;
 import org.awesome.enums.Role;
 import org.awesome.models.*;
-import org.awesome.service.ICatalogueService;
-import org.awesome.service.IFavoriteService;
-import org.awesome.service.IGatewayService;
-import org.awesome.service.IUserService;
+import org.awesome.service.*;
 import org.awesome.service.impl.MongoService;
 import org.awesome.utils.CommonUtils;
 import org.awesome.utils.EmailUtils;
@@ -22,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -41,45 +39,134 @@ public class UserController {
     private IGatewayService gatewayService;
     @Autowired
     private IFavoriteService favoriteService;
+    @Autowired
+    private IIdentifyCodeService identifyCodeService;
+
+    /**
+     * 获取User
+     * @return User
+     */
+    private User getUser(){
+        String username = "";
+        try {
+            final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            username = userDetails.getUsername();
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+        User user = userService.redisGetUser(username);
+        if (user == null) {
+            return null;
+        }
+        return user;
+    }
+
+    /**
+     * 获取username
+     * @return String
+     */
+    private String getUsername(){
+        try {
+            final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            return userDetails.getUsername();
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+    /**
+     * 登陆后的用户获取验证码
+     * @return
+     */
+    @GetMapping("identifyCode")
+    public RestResultVo getIdentifyCode() {
+        User user  = getUser();
+        if (user == null) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "系统有点懵，请重新登陆试试", null);
+        }
+        return identifyCodeService.generateIdentifyCodeAndImage(user.getUsername());
+    }
 
     /**
      * 用户退出登陆
      *
-     * @param username
      * @return
      */
     @GetMapping("logout")
-    public RestResultVo logout(@RequestParam("username") String username) {
-        if (StringUtils.isEmpty(username)) {
-            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户不能为空", null);
-        }
-        redisDao.del(username);
+    public RestResultVo logout() {
+        User user  = getUser();
+        redisDao.del(user.getUsername());
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null, null);
     }
 
+    @GetMapping("checkUserStatus")
+    public RestResultVo checkUserStatus(HttpServletRequest request){
+        User user  = getUser();
+        if (user == null) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "系统有点懵，请重新登陆试试", null);
+        }
+        if (!"1".equals(user.getUserStatus())) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "你的账号好像不能用了，请联系一下管理员吧", null);
+        }
+        JSONObject res = new JSONObject();
+        res.put("userTemp", new UserTempVo(user.getUsername(),user.getNickname(),user.getHeadPortraitUrl(),user.getAuthorities().get(0)));
+
+        if(!StringUtils.isEmpty(request.getParameter("needImg"))){
+            RestResultVo imgVo = identifyCodeService.generateIdentifyCodeAndImage(user.getUsername());
+            if(imgVo.getCode() == 1){
+                res.put("img",imgVo.getData());
+            }
+        }
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null,res);
+    }
+
+    /**
+     * 刷新token并返回新的User
+     * @param authorization
+     * @return
+     */
+    @GetMapping("updateUserToken")
+    public RestResultVo updateUserToken(@RequestHeader(Constant.JWT_HEADER) String authorization) {
+        User user  = getUser();
+        if (user == null) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "系统有点懵，请重新登陆试试", null);
+        }
+        JSONObject res = new JSONObject();
+        res.put("userTemp", new UserTempVo(user.getUsername(),user.getNickname(),user.getHeadPortraitUrl(),user.getAuthorities().get(0)));
+        JSONObject userObj = JSON.parseObject(JSON.toJSONString(user));
+        userObj.put("authority",user.getAuthorities().get(0));
+        res.put("userInfo",userObj);
+        RestResultVo vo = gatewayService.refreshToken(authorization);
+        if(vo.getCode() ==1){
+            res.put("token",vo.getData());
+            return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null,res);
+        }else{
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "校验出问题了，请重新登陆试试", null);
+        }
+    }
     /**
      * 查询用户信息
      *
-     * @param username
      * @return
      */
     @GetMapping("getUserInfo")
-    public RestResultVo queryUserInfo(@RequestParam("username") String username) {
-        if (StringUtils.isEmpty(username)) {
-            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "参数有误，无权操作", null);
-        }
-        User user = userService.redisGetUser(username);
+    public RestResultVo queryUserInfo() {
+        User user = getUser();
         if (user == null) {
-            user = userService.findUserByName(username);
-            user.setPassword("");
-            user.setAuthorities(userService.findUserAuthoritiesByName(username));
-            redisDao.set(username, JSON.toJSONString(user));
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "系统有点懵，请重新登陆试试", null);
         }
-        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null, user);
+        JSONObject userObj = JSON.parseObject(JSON.toJSONString(user));
+        userObj.put("authority",user.getAuthorities().get(0));
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null, userObj);
     }
 
     @GetMapping("getAllUserInfo")
-    public RestResultVo getAllUserInfo(@RequestParam("username") String username) {
+    public RestResultVo getAllUserInfo() {
+        String username = getUsername();
         if (StringUtils.isEmpty(username)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "参数有误，无权操作", null);
         }
@@ -116,13 +203,13 @@ public class UserController {
      * @return
      */
     @PostMapping("adminSignUp")
-    public RestResultVo adminSignUp(@RequestBody SignupVo vo) {
+    public RestResultVo adminSignUp(@RequestBody SignupVo vo,HttpServletRequest request) {
         String valiStr = vo.validate();
         if (!"1".equals(valiStr)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "注册失败：" + valiStr, null);
         }
         String vercode = vo.getVercode();
-        String key = MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, vo.getUsername());
+        String key = MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, CommonUtils.getIpAddress(request));
         Object code = redisDao.get(key);
         redisDao.del(key);
         if (code == null || ((int) code) != Integer.parseInt(vercode)) {
@@ -191,11 +278,7 @@ public class UserController {
 
     @PostMapping("updateUserHeadImg")
     public RestResultVo updateUserHeadImg(@RequestBody JSONObject object) {
-        String username = object.getString("username");
-        if (StringUtils.isEmpty(username)) {
-            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "修改头像出错：用户名空啦", null);
-        }
-        User user = userService.redisGetUser(username);
+        User user = getUser();
         if (StringUtils.isEmpty(user)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "修改头像出错：用户名没查着", null);
         }
@@ -204,11 +287,11 @@ public class UserController {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "修改头像出错：头像地址空了", null);
         }
         try {
-            userService.updateUserHeadImg(username, imgUrl);
-            user = userService.findUserByName(username);
+            userService.updateUserHeadImg(user.getUsername(), imgUrl);
+            user = userService.findUserByName(user.getUsername());
             user.setPassword("");
-            user.setAuthorities(userService.findUserAuthoritiesByName(username));
-            redisDao.set(username, JSON.toJSONString(user));
+            user.setAuthorities(userService.findUserAuthoritiesByName(user.getUsername()));
+            redisDao.set(user.getUsername(), JSON.toJSONString(user));
             return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", user);
         } catch (Exception e) {
             e.printStackTrace();
@@ -243,6 +326,11 @@ public class UserController {
      */
     @PostMapping("saveNewArticle")
     public RestResultVo saveNewArticle(@RequestBody ArticleVo articleVo) {
+        String username = getUsername();
+        if(StringUtils.isEmpty(username)){
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "完了，你把系统整懵了。重启浏览器试试", null);
+        }
+        articleVo.setUsername(username);
         if (!"1".equals(articleVo.validateParams())) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, articleVo.validateParams(), null);
         }
@@ -333,7 +421,8 @@ public class UserController {
 
 
     @GetMapping("/queryGuestReply")
-    public RestResultVo queryGuestReply(@RequestParam("username") String username) {
+    public RestResultVo queryGuestReply() {
+        String username = getUsername();
         if (StringUtils.isEmpty(username)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "抱歉您无权查看", null);
         }
@@ -347,12 +436,11 @@ public class UserController {
 
     @PostMapping("/updateGuestReplyStatus")
     public RestResultVo updateGuestReplyStatus(@RequestBody JSONObject object) {
-        String username = object.getString("username");
+        User user = getUser();
         String id = object.getString("id");
-        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(id)) {
+        if (StringUtils.isEmpty(user.getUsername()) || StringUtils.isEmpty(id)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "抱歉您无权操作", null);
         }
-        User user = userService.redisGetUser(username);
         if (StringUtils.isEmpty(user) || !Role.ADMIN.getValue().equals(user.getAuthorities().get(0))) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "抱歉您无权操作", null);
         }
@@ -378,37 +466,37 @@ public class UserController {
     @GetMapping("queryMyArticle")
     //@PreAuthorize("hasAnyAuthority('ADMIN')")
     //@RequestParam("pageIndex") int pageIndex, @RequestParam("pageSize") int pageSize
-    public RestResultVo queryMyArticle(@RequestParam("username") String username) {
+    public RestResultVo queryMyArticle() {
         /*final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String username = userDetails.getUsername();*/
 
         //return favoriteService.getFavoritesByUsername(pageIndex, pageSize, username);
-        User user = userService.redisGetUser(username);
+        User user = getUser();
         if (StringUtils.isEmpty(user)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户未登陆或无此用户", null);
         }
         JSONObject resObj = new JSONObject();
         Map<String, String> queryParams = new HashMap<String, String>();
-        queryParams.put("username",username);
+        queryParams.put("username",user.getUsername());
         resObj.put("myCatalogue",catalogueService.queryCatalogueByParams(queryParams));
-        resObj.put("statistics",catalogueService.countCatalogueAuthor(username,null));
+        resObj.put("statistics",catalogueService.countCatalogueAuthor(user.getUsername(),null));
         //resObj.put("myCollection",favoriteService.getFavoritesByUsername(username));
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "",resObj);
     }
 
     @GetMapping("queryMyCollection")
-    public RestResultVo queryMyCollection(@RequestParam("username") String username) {
-        User user = userService.redisGetUser(username);
+    public RestResultVo queryMyCollection() {
+        User user = getUser();
         if (StringUtils.isEmpty(user)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户未登陆或无此用户", null);
         }
         JSONObject resObj = new JSONObject();
         Map<String, String> queryParams = new HashMap<String, String>();
-        queryParams.put("username",username);
-        catalogueService.countCatalogueAuthor(username,null);
-        resObj.put("statistics",catalogueService.countCatalogueAuthor(username,null));
-        resObj.put("myCollection",favoriteService.getFavoritesByUsername(username));
+        queryParams.put("username",user.getUsername());
+        catalogueService.countCatalogueAuthor(user.getUsername(),null);
+        resObj.put("statistics",catalogueService.countCatalogueAuthor(user.getUsername(),null));
+        resObj.put("myCollection",favoriteService.getFavoritesByUsername(user.getUsername()));
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "",resObj);
     }
 
@@ -443,11 +531,11 @@ public class UserController {
     }
 
     @GetMapping("queryUserSelfReciveMessage")
-    public RestResultVo queryUserSelfReciveMessage(@RequestParam("username") String username){
-        User user = userService.redisGetUser(username);
+    public RestResultVo queryUserSelfReciveMessage(){
+        User user = getUser();
         if (StringUtils.isEmpty(user)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户未登陆或无此用户", null);
         }
-        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "",  userService.queryUserCommentsList(null,username));
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "",  userService.queryUserCommentsList(null,user.getUsername()));
     }
 }

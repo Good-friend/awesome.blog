@@ -17,7 +17,7 @@ public interface Constant {
     /**
      * jwt失效时间
      */
-    int JWT_TIMEOUT = 60 * 60 * 24 * 1000;
+    int JWT_TIMEOUT = 60 * 60 * 24 * 1000 * 3;
 
     /**
      * redis验证码key

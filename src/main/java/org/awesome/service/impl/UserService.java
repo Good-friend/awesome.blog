@@ -22,6 +22,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -140,7 +142,14 @@ public class UserService implements IUserService {
             LOG.error("serialNumber is null !");
             return null;
         }
-        String username = request.getParameter("username");
+        String username;
+        try {
+            final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            username = userDetails.getUsername();
+        }catch (Exception e){
+            username = null;
+        }
         String ip = CommonUtils.getIpAddress(request);
         List<OperationFlow> thumbUpList = mongoService.queryOperationFlow(action,serialNumber,username,ip);
         if(thumbUpList == null || thumbUpList.size() <1){

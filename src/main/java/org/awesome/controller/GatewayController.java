@@ -38,8 +38,8 @@ public class GatewayController {
     private EmailUtils emailUtils;
 
     @PostMapping("login")
-    public RestResultVo login(@RequestBody LoginVo loginVo) {
-        return gatewayService.login(loginVo.getUsername(), loginVo.getPassword(), loginVo.getIdentifyCode());
+    public RestResultVo login(@RequestBody LoginVo loginVo,HttpServletRequest request) {
+        return gatewayService.login(loginVo.getUsername(), loginVo.getPassword(), loginVo.getIdentifyCode(),request);
     }
 
     @PostMapping("signUp")
@@ -55,12 +55,8 @@ public class GatewayController {
     }
 
     @GetMapping("identifyCode")
-    public RestResultVo getIdentifyCode(@RequestParam("username") String username, HttpServletRequest request, HttpServletResponse response) {
-        if (StringUtils.isEmpty(username)) {
-            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户不能为空", null);
-        }
-
-        return identifyCodeService.generateIdentifyCodeAndImage(username);
+    public RestResultVo getIdentifyCode(HttpServletRequest request) {
+        return identifyCodeService.generateIdentifyCodeAndImage(CommonUtils.getIpAddress(request));
     }
 
     @GetMapping("queryUpdateBlogs")
