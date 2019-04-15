@@ -25,7 +25,7 @@ public class ArticleVo {
 
     private boolean publicity;//是否公开
 
-    private String vercode;//验证码
+    //private String vercode;//验证码
 
     public String validateParams(){
         if(StringUtils.isEmpty(title)){
@@ -43,9 +43,9 @@ public class ArticleVo {
         if(StringUtils.isEmpty(publicity)){
             return "权限为空";
         }
-        if(StringUtils.isEmpty(vercode)){
-            return "验证码为空";
-        }
+        //if(StringUtils.isEmpty(vercode)){
+        //    return "验证码为空";
+        //}
         return "1";
     }
 

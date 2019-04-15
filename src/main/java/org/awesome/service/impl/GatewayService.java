@@ -26,6 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.text.MessageFormat;
@@ -62,10 +63,11 @@ public class GatewayService implements IGatewayService {
 
 
     @Override
-    public RestResultVo login(String username, String password, int identityCode, HttpServletRequest request) {
+    public RestResultVo login(String username, String password, /*int identityCode,*/ HttpServletRequest request) {
         LOG.info("[{}] attempt login", username);
 
         //校验验证码
+        /*
         String key = MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, CommonUtils.getIpAddress(request));
 
         Object code = redisDao.get(key);
@@ -77,7 +79,7 @@ public class GatewayService implements IGatewayService {
         }
 
         redisDao.del(key);
-
+        */
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
 
         Authentication authentication;
@@ -109,9 +111,14 @@ public class GatewayService implements IGatewayService {
 
             LOG.error("[{}] already exists..", user.getUsername());
 
-            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "user already exists.", null);
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户名已被注册.", null);
         }
+        if (userMapper.selectOne(new QueryWrapper<User>().eq("email", user.getEmail())) != null) {
 
+            LOG.error("[{}] already exists..", user.getUsername());
+
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "电子邮箱已被注册.", null);
+        }
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
 
         userMapper.insert(user);
@@ -161,5 +168,16 @@ public class GatewayService implements IGatewayService {
                 System.out.println("邮件发送成功！");
             }
         }).start();
+    }
+
+    @Override
+    public RestResultVo registerValidate(String username,String email){
+        if (!StringUtils.isEmpty(username) && userMapper.selectOne(new QueryWrapper<User>().eq("username", username)) != null) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户名已被注册", null);
+        }
+        if (!StringUtils.isEmpty(email) && userMapper.selectOne(new QueryWrapper<User>().eq("email", email)) != null) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "邮箱已被注册", null);
+        }
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
     }
 }

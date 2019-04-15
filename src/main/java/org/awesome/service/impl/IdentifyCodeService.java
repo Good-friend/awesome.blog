@@ -1,9 +1,8 @@
 package org.awesome.service.impl;
 
-import org.awesome.Dao.RedisDao;
-import org.awesome.constants.Constant;
 import org.awesome.models.IdentifyCode;
 import org.awesome.service.IIdentifyCodeService;
+import org.awesome.utils.CommonUtils;
 import org.awesome.utils.IdentifyCodeUtil;
 import org.awesome.vo.RestResultVo;
 import org.slf4j.Logger;
@@ -12,12 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.text.MessageFormat;
 import java.util.Base64;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class IdentifyCodeService implements IIdentifyCodeService {
@@ -27,18 +28,36 @@ public class IdentifyCodeService implements IIdentifyCodeService {
     @Autowired
     private IdentifyCodeUtil identifyCodeUtil;
 
-    @Autowired
-    private RedisDao redisDao;
 
     private SecureRandom random = new SecureRandom();
 
+    private static Map<String, String> map = new ConcurrentHashMap<String, String>();
+
+
     @Override
-    public RestResultVo generateIdentifyCodeAndImage(String username) {
+    public RestResultVo checkIdentifyCode(HttpServletRequest request){
+        String key =  CommonUtils.getIpAddress(request) +"_"+ request.getParameter("str");
+        LOG.info("map取出验证码 KEY：[{}] .", key);
+        String redisCode = map.get(key);
+        map.remove(key);
+        LOG.info("map取出验证码 ：[{}] .", redisCode);
+        String code = request.getParameter("code");
+        LOG.info("需要验证的code ：[{}] .", code);
+       if(code.equals(redisCode)){
+           return new RestResultVo(RestResultVo.RestResultCode.SUCCESS,"","");
+       }else{
+           return new RestResultVo(RestResultVo.RestResultCode.FAILED,"","");
+       }
+    }
+
+    @Override
+    public RestResultVo generateIdentifyCodeAndImage(String param) {
         final IdentifyCode identifyCode = createIdentifyCode();
         final String identifyCodeImage = createIdentifyCodeImage(identifyCode);
-
-        redisDao.set(MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, username), identifyCode.getResult(), Constant.REDIS_IDENTIFYCODE_TIMEOUT);
-        LOG.info("存入Redis验证码：[{}] .", identifyCode.getResult());
+        StringBuffer key = new StringBuffer(param + "_" + identifyCodeImage.substring(identifyCodeImage.length()-9,identifyCodeImage.length()).replace("+","/"));
+        LOG.info("存入map KEY：[{}] .", key.toString());
+        map.put(key.toString(),identifyCode.getResult()+"");
+        LOG.info("存入map验证码：[{}] .", identifyCode.getResult());
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, null, identifyCodeImage);
     }
 

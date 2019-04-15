@@ -178,26 +178,6 @@ public class UserController {
     }
 
 
-    //生成随机数字和字母,
-    private static String getStringRandom(int length) {
-
-        String val = "";
-        Random random = new Random();
-        //length为几位密码
-        for (int i = 0; i < length; i++) {
-            String charOrNum = random.nextInt(2) % 2 == 0 ? "char" : "num";
-            //输出字母还是数字
-            if ("char".equalsIgnoreCase(charOrNum)) {
-                //输出是大写字母还是小写字母
-                int temp = random.nextInt(2) % 2 == 0 ? 65 : 97;
-                val += (char) (random.nextInt(26) + temp);
-            } else if ("num".equalsIgnoreCase(charOrNum)) {
-                val += String.valueOf(random.nextInt(10));
-            }
-        }
-        return val;
-    }
-
     /**
      * @param vo
      * @return
@@ -208,6 +188,7 @@ public class UserController {
         if (!"1".equals(valiStr)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "注册失败：" + valiStr, null);
         }
+        /*
         String vercode = vo.getVercode();
         String key = MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, CommonUtils.getIpAddress(request));
         Object code = redisDao.get(key);
@@ -215,7 +196,8 @@ public class UserController {
         if (code == null || ((int) code) != Integer.parseInt(vercode)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "人类验证错误", null);
         }
-        String password = getStringRandom(8);
+        */
+        String password = CommonUtils.getStringRandom(8);
         User user = new User(vo.getUsername(), password, "1", 0, vo.getNickname(), "1".equals(vo.getSex()) ? "http://120.79.240.9:8080/headImg/6.jpg" : "http://120.79.240.9:8080/headImg/8.jpg", vo.getSex(), "地球", CommonUtils.getNowDate(), "大家在这相聚是缘分", vo.getEmail(), null);
         RestResultVo restResultVo = gatewayService.register(user);
         if (restResultVo.getCode() == RestResultVo.RestResultCode.SUCCESS) {
@@ -334,12 +316,14 @@ public class UserController {
         if (!"1".equals(articleVo.validateParams())) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, articleVo.validateParams(), null);
         }
+        /*
         String key = MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, articleVo.getUsername());
         Object code = redisDao.get(key);
         redisDao.del(key);
         if (code == null || ((int) code) != Integer.parseInt(articleVo.getVercode())) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "人类验证错误", null);
         }
+        */
         try {
             String serialNumber = userService.saveNewArticle(articleVo);
             return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", serialNumber);
@@ -360,22 +344,24 @@ public class UserController {
         String type = obj.getString("type");
         String content = obj.getString("content");
         String title = obj.getString("title");
-        String vercode = obj.getString("vercode");
+        //String vercode = obj.getString("vercode");
         String username = obj.getString("author");
         if (StringUtils.isEmpty(serialNumber)
                 || StringUtils.isEmpty(type)
                 || StringUtils.isEmpty(content)
                 || StringUtils.isEmpty(title)
-                || StringUtils.isEmpty(vercode)
+                //|| StringUtils.isEmpty(vercode)
                 || StringUtils.isEmpty(username)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "修改失败：参数为空", null);
         }
+        /*
         String key = MessageFormat.format(Constant.REDIS_IDENTIFYCODE_KEY_WRAPPER, username);
         Object code = redisDao.get(key);
         redisDao.del(key);
         if (code == null || ((int) code) != Integer.parseInt(vercode)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "人类验证错误", null);
         }
+        */
         try {
             userService.updateArticle(serialNumber, type, content, title);
         } catch (Exception e) {

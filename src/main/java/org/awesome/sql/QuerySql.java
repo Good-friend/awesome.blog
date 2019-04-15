@@ -17,7 +17,7 @@ public class QuerySql {
 
                 FROM("t_catalogue t , t_user t1 , t_type t2 ")  ;
 
-                WHERE("t.author = t1.username and t.type = t2.type_id ");
+                WHERE("t.author = t1.username and t.type = t2.type_id and t.publicity = '1' ");
 
 
                 if(params.get("stick") !=null){

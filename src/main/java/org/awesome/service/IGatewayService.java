@@ -6,7 +6,9 @@ import org.awesome.vo.RestResultVo;
 import javax.servlet.http.HttpServletRequest;
 
 public interface IGatewayService {
-    RestResultVo login(String username, String password, int identifyCode,HttpServletRequest request);
+    RestResultVo login(String username, String password/*,int identifyCode*/,HttpServletRequest request);
+
+    RestResultVo registerValidate(String username,String email);
 
     RestResultVo register(User user);
 
