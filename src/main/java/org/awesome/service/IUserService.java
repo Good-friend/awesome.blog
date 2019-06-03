@@ -24,7 +24,7 @@ public interface IUserService {
 
     OperationFlow createOperationFlow(HttpServletRequest request, String action);
 
-    void updateArticle(String serialNumber,String type,String content,String title) throws Exception;
+    void updateArticle(String serialNumber,String type,String content,String title,String contentOriginal) throws Exception;
 
     void updateUserBasicInfo(UserBasicInfoVo userBasicInfoVo)throws Exception;
 

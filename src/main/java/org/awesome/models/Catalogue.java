@@ -23,12 +23,11 @@ public class Catalogue {
 
     private String title;// 标题
 
-    private String status;// 问题状态
-    // 0-未结；1-已结
+    private String status;// 文章状态:0-草稿;1-公开发表;2-私密发表
 
     private String createTime;//		创建时间
 
-    private String endTime;//		结束时间
+    private String endTime;//		结束时间（废弃）
 
     private int seenTimes;//浏览次数
 
@@ -38,11 +37,11 @@ public class Catalogue {
 
     private String author;//作者---username
 
-    private String type;//类型：具体看枚举TypeEnum
+    private String type;//类型：具体看枚举TypeEnum（废弃）
 
     private boolean stick;//是否置顶
 
-    private boolean publicity;//是否公开
+    private boolean publicity;//是否公开（废弃）
 
 
 

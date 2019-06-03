@@ -17,4 +17,6 @@ public class Connotation {
     private String serialNumber;//问题编号
     private String content;
 
+    private String contentOriginal;//未转为html的markdown语法
+
 }

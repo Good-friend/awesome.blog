@@ -42,13 +42,13 @@ public class UserService implements IUserService {
 
     private static final Logger LOG = LoggerFactory.getLogger(UserService.class);
 
-    @Autowired
+    @Resource
     private UserMapper userMapper;
 
-    @Autowired
+    @Resource
     private AuthorityMapper authorityMapper;
 
-    @Autowired
+    @Resource
     private CatalogueMapper catalogueMapper;
 
     @Resource
@@ -97,7 +97,7 @@ public class UserService implements IUserService {
 
     @Override
     public String saveNewArticle(ArticleVo articleVo) throws Exception{
-        String serialNumber = getMajorKeyId(articleVo.getType().substring(0,1));
+        String serialNumber = CommonUtils.getMajorKeyId(articleVo.getType().substring(0,1));
         Catalogue catalogue = new Catalogue();
         catalogue.setSerialNumber(serialNumber);
         catalogue.setTitle(articleVo.getTitle());
@@ -115,24 +115,9 @@ public class UserService implements IUserService {
         Connotation connotation= new Connotation();
         connotation.setSerialNumber(serialNumber);
         connotation.setContent(articleVo.getContent());
+        connotation.setContentOriginal(articleVo.getContentOriginal());
         connotationMapper.insert(connotation);
         return serialNumber;
-    }
-
-    private static String str = "0000";
-    private String getMajorKeyId(String type){
-        String id = (String)redisDao.get("major_key_id");
-        Date nowTime = new Date();
-        SimpleDateFormat time = new SimpleDateFormat("yyyyMMddHHmmss");
-        String sysDate = time.format(nowTime);
-        int p = Integer.parseInt(str) + 1;
-        if(p > 9999) {
-            p = 0;
-        }
-        str = String.format("%04d",p);
-        id = type+sysDate+str;
-        redisDao.set("major_key_id",id);
-        return id;
     }
 
     @Override
@@ -173,9 +158,9 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public void updateArticle(String serialNumber,String type,String content,String title) throws Exception{
+    public void updateArticle(String serialNumber,String type,String content,String title,String contentOriginal) throws Exception{
         if(catalogueMapper.updateCatalogueTitle(serialNumber, type, title) != 1
-                || connotationMapper.updateConnotation(serialNumber, content) != 1){
+                || connotationMapper.updateConnotation(serialNumber, content,contentOriginal) != 1){
             throw new Exception("update article fail");
         }
     }

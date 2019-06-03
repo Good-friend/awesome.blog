@@ -11,7 +11,7 @@ public class ArticleVo {
     //public static String SUCCESS = "1";
 
     private String title;// 标题
-    private String content;// 内容
+    private String content;// 内容-html
 
     private String endTime;//结束时间 （问题话题有）
 
@@ -25,6 +25,7 @@ public class ArticleVo {
 
     private boolean publicity;//是否公开
 
+    private String contentOriginal;//未转为html的markdown语法
     //private String vercode;//验证码
 
     public String validateParams(){
@@ -43,9 +44,9 @@ public class ArticleVo {
         if(StringUtils.isEmpty(publicity)){
             return "权限为空";
         }
-        //if(StringUtils.isEmpty(vercode)){
-        //    return "验证码为空";
-        //}
+        if(StringUtils.isEmpty(contentOriginal)){
+           return "内容为空";
+        }
         return "1";
     }
 

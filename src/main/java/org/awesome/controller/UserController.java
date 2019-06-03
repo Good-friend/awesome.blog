@@ -10,6 +10,7 @@ import org.awesome.service.*;
 import org.awesome.service.impl.MongoService;
 import org.awesome.utils.CommonUtils;
 import org.awesome.utils.EmailUtils;
+import org.awesome.utils.SFTPUtils;
 import org.awesome.vo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,8 +19,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.InputStream;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -335,7 +338,19 @@ public class UserController {
 
     @GetMapping("queryEditArticle")
     public RestResultVo saveNewArticle(@RequestParam("id") String id) {
-        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", catalogueService.queryConnotationDetail(id));
+        User user  = getUser();
+        if (user == null) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "系统有点懵，请重新登陆试试", null);
+        }
+        if (!"1".equals(user.getUserStatus())) {
+            return new RestResultVo(RestResultVo.RestResultCode.FAILED, "你的账号好像不能用了，请联系一下管理员吧", null);
+        }
+        JSONObject res = new JSONObject();
+        res.put("userTemp", new UserTempVo(user.getUsername(),user.getNickname(),user.getHeadPortraitUrl(),user.getAuthorities().get(0)));
+        CatalogueVo c = catalogueService.queryConnotationDetail(id);
+        System.out.println(c.getContentOriginal());
+        res.put("article",catalogueService.queryConnotationDetail(id));
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "",res);
     }
 
     @PostMapping("updateArticle")
@@ -343,6 +358,7 @@ public class UserController {
         String serialNumber = obj.getString("serialNumber");
         String type = obj.getString("type");
         String content = obj.getString("content");
+        String contentOriginal = obj.getString("contentOriginal");
         String title = obj.getString("title");
         //String vercode = obj.getString("vercode");
         String username = obj.getString("author");
@@ -350,7 +366,7 @@ public class UserController {
                 || StringUtils.isEmpty(type)
                 || StringUtils.isEmpty(content)
                 || StringUtils.isEmpty(title)
-                //|| StringUtils.isEmpty(vercode)
+                || StringUtils.isEmpty(contentOriginal)
                 || StringUtils.isEmpty(username)) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "修改失败：参数为空", null);
         }
@@ -363,11 +379,11 @@ public class UserController {
         }
         */
         try {
-            userService.updateArticle(serialNumber, type, content, title);
+            userService.updateArticle(serialNumber, type, content, title,contentOriginal);
         } catch (Exception e) {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "修改异常：" + e.getMessage(), null);
         }
-        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", null);
+        return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "", serialNumber);
 
     }
 
@@ -523,5 +539,42 @@ public class UserController {
             return new RestResultVo(RestResultVo.RestResultCode.FAILED, "用户未登陆或无此用户", null);
         }
         return new RestResultVo(RestResultVo.RestResultCode.SUCCESS, "",  userService.queryUserCommentsList(null,user.getUsername()));
+    }
+
+    /**
+     *上传图片到服务器
+     * @param uploadFile
+     * @param name
+     * @return
+     */
+    @RequestMapping(value = "/uploadBlogImg")
+    public JSONObject pictureUpload(@RequestParam("file") MultipartFile uploadFile, @RequestParam("name")String name) {
+        JSONObject res = new JSONObject();
+        res.put("result", "0");
+        try {
+            //1、给上传的图片生成新的文件名
+            //1.1获取原始文件名
+            String oldName = uploadFile.getOriginalFilename();            //1.2使用IDUtils工具类生成新的文件名，新文件名 = newName + 文件后缀
+            String newName = "blog_" + CommonUtils.getNowTimeNoFm();
+            newName = newName + oldName.substring(oldName.lastIndexOf("."));            //1.3生成文件在服务器端存储的子目录
+            //3、把图片上传到图片服务器
+            String filePath = name+"/blog";
+            //3.1获取上传的io流
+            InputStream input = uploadFile.getInputStream();
+            //3.2调用FtpUtil工具类进行上传
+            System.out.println("--------->sftp登陆成功");
+            SFTPUtils sftp = new SFTPUtils("root", "gy323898`", "120.79.240.9", 22);
+            sftp.login();
+            System.out.println("--------->sftp登陆成功");
+            sftp.upload("/home/images",filePath,newName, input);
+            res.put("result", "1");
+            res.put("imgUrl", "http://120.79.240.9:8080/"+filePath+"/"+newName);
+            return res;
+
+        }  catch (Exception e) {
+            e.printStackTrace();
+            res.put("msg","抱歉，上传出错"+e.getMessage());
+            return res;
+        }
     }
 }

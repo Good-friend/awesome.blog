@@ -46,18 +46,17 @@ public class CommonUtils {
         return ip;
     }
 
-    private static String str = "0000";
+    private static int _NO = 0;
+    private synchronized static int add_No(){
+        _NO ++;
+        if(_NO > 9999) _NO = 0;
+        return _NO;
+    }
 
     public static String getMajorKeyId(String type){
-        Date nowTime = new Date();
-        SimpleDateFormat time = new SimpleDateFormat("yyyyMMddHHmmss");
-        String sysDate = time.format(nowTime);
-        int p = Integer.parseInt(str) + 1;
-        if(p > 9999) {
-            p = 0;
-        }
-        str = String.format("%04d",p);
-        return type+sysDate+str;
+        SimpleDateFormat time = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        String sysDate = time.format(new Date());
+        return type+sysDate+add_No();
     }
 
     //生成随机数字和字母,

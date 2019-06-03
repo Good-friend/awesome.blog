@@ -41,4 +41,8 @@ public class CatalogueVo {
     private String typeName;
 
     private String content;
+
+    private String contentOriginal;//未转为html的markdown语法
+
+
 }

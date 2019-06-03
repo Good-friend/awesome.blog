@@ -61,7 +61,7 @@ public class QuerySql {
     public String queryConnotationDetailSql(String serialNumber) {
         return new SQL() {
             {
-                SELECT("t.*,t1.nickname,t1.head_portrait_url,t2.type_name,t3.content ");
+                SELECT("t.*,t1.nickname,t1.head_portrait_url,t2.type_name,t3.content,t3.content_original ");
 
                 FROM("t_catalogue t , t_user t1 , t_type t2,t_connotation t3 ");
 
