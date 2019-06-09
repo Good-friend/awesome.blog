@@ -42,22 +42,11 @@ public class LobbyController {
     public RestResultVo queryCatalogueList(HttpServletRequest request) {
         JSONObject resObj = new JSONObject();
         Map<String, String> queryParams = new HashMap<String, String>();
-        String status = request.getParameter("status");
-        if (status != null) {
-            queryParams.put("status", status);
-        }
-        String best = request.getParameter("best");
-        if (best != null) {
-            queryParams.put("best", best);
-        }
-        String type = request.getParameter("type");
-        if (type != null) {
-            queryParams.put("type", type);
-        }
         String orderType = request.getParameter("orderType");
-        if (orderType != null) {
-            queryParams.put("orderType", orderType);
+        if (orderType == null) {
+            orderType = "id";
         }
+        queryParams.put("orderType", orderType);
         String queryCountStr = request.getParameter("queryCountStr");
         if (queryCountStr != null) {
             queryParams.put("queryCount", queryCountStr);
@@ -69,9 +58,6 @@ public class LobbyController {
             Map<String, String> stickParams = new HashMap<String, String>();
             stickParams.put("orderType", "id");
             stickParams.put("stick", "1");
-            if (type != null) {
-                stickParams.put("type", type);
-            }
             resObj.put("stickList", catalogueService.queryCatalogue(stickParams));
         }
         resObj.put("catalogueList", catalogueService.queryCatalogue(queryParams));

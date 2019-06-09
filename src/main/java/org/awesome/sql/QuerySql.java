@@ -17,23 +17,34 @@ public class QuerySql {
 
                 FROM("t_catalogue t , t_user t1 , t_type t2 ")  ;
 
-                WHERE("t.author = t1.username and t.type = t2.type_id and t.publicity = '1' ");
+                WHERE("t.author = t1.username and t.type = t2.type_id and t.status = '1' ");
 
 
                 if(params.get("stick") !=null){
                     WHERE("t.stick =#{stick}");
                 }
+                /*
                 if(params.get("type") !=null){
                     WHERE("t.type =#{type}");
                 }
                 if(params.get("status") !=null){
                     WHERE("t.status =#{status}");
                 }
+
                 if(params.get("best") !=null){
                     WHERE("t.best =#{best}");
                 }
+                */
                 if("heat".equals(params.get("orderType"))){
                     String sql = "t.comment_times desc";
+                    if(params.get("queryCount") !=null){
+                        sql += " limit "+params.get("queryCount");
+                    }else{
+                        sql += " limit 0,15";
+                    }
+                    ORDER_BY(sql);
+                }else if("best".equals(params.get("orderType"))){
+                    String sql = "t.best desc";
                     if(params.get("queryCount") !=null){
                         sql += " limit "+params.get("queryCount");
                     }else{
@@ -109,16 +120,23 @@ public class QuerySql {
 
     }
 
+    /**
+     * 统计发帖条数
+     * 包含自己发的和自己收藏的
+     * @param params
+     * @return
+     */
     public String countCatalogueAuthor(Map<String,String> params){
         return new SQL() {
             {
                 SELECT("t.nickname,t.username,t.head_portrait_url,IFNULL(t1.cataCount,0) as cataCount,IFNULL(t2.favorCount,0) as favorCount");
                 FROM("t_user t");
-                if(!StringUtils.isEmpty(params.get("publicity"))){
-                    LEFT_OUTER_JOIN("(select t.author,count(*) as cataCount from t_catalogue t where t.publicity=#{publicity} GROUP BY t.author) t1 ON t.username = t1.author");
-                }else{
-                    LEFT_OUTER_JOIN("(select t.author,count(*) as cataCount from t_catalogue t GROUP BY  t.author) t1 ON t.username = t1.author");
+                StringBuffer str = new StringBuffer("(select t.author,count(*) as cataCount from t_catalogue t ");
+                if(!StringUtils.isEmpty(params.get("status"))){
+                    str.append("where t.status=#{status} ");
                 }
+                str.append( " GROUP BY t.author) t1 ON t.username = t1.author ");
+                LEFT_OUTER_JOIN(str.toString());
                 LEFT_OUTER_JOIN("(select t.username,count(*) as favorCount from t_favorite t GROUP BY t.username) t2 ON t.username = t2.username");
                 //WHERE("t.username = t1.author and t.username = t2.username");
                 if(!StringUtils.isEmpty(params.get("username"))){

@@ -97,20 +97,20 @@ public class UserService implements IUserService {
 
     @Override
     public String saveNewArticle(ArticleVo articleVo) throws Exception{
-        String serialNumber = CommonUtils.getMajorKeyId(articleVo.getType().substring(0,1));
+        String serialNumber = CommonUtils.getMajorKeyId("T");
         Catalogue catalogue = new Catalogue();
         catalogue.setSerialNumber(serialNumber);
         catalogue.setTitle(articleVo.getTitle());
         catalogue.setStatus("0");
         catalogue.setCreateTime(CommonUtils.getNowTime());
-        catalogue.setEndTime(articleVo.getEndTime());
+        //catalogue.setEndTime(articleVo.getEndTime());
         catalogue.setSeenTimes(0);
         catalogue.setCommentTimes(0);
         catalogue.setBest(articleVo.isBest());
         catalogue.setAuthor(articleVo.getUsername());
-        catalogue.setType(articleVo.getType());
+        //catalogue.setType(articleVo.getType());
         catalogue.setStick(articleVo.isStick());
-        catalogue.setPublicity(articleVo.isPublicity());
+        //catalogue.setPublicity(articleVo.isPublicity());
         catalogueMapper.insert(catalogue);
         Connotation connotation= new Connotation();
         connotation.setSerialNumber(serialNumber);
